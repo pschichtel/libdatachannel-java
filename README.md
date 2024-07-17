@@ -1,3 +1,0 @@
-# libdatachannel-java
-
-Web Example
