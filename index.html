@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>RTC</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<div class="full-row row">
+    <div class="column left-column">
+        <label>Offer</label>
+        <textarea id="offer" placeholder="Paste offer here. And press Enter"></textarea>
+        <label>Answer</label>
+        <textarea id="fullAnswer" placeholder="Paste offer here. And press Enter"></textarea>
+        <label>Compressed Answer</label>
+        <textarea id="answer" placeholder="Paste offer here. And press Enter"></textarea>
+    </div>
+    <div class="column">
+        <p id="stat">
+        </p>
+        <div id="stat2">
+            <div class="row">
+                <span class="fa-stack state-connected">
+                    <i class="fa-stack-2x fa-solid fa-signal "></i>
+                    <i class="fa-stack-2x fa-solid fa-check" style="color: #03c403"></i>
+                </span>
+                <span class="fa-stack state-connecting">
+                    <i class="fa-stack-2x fa-solid fa-signal "></i>
+                </span>
+                <span class="fa-stack state-failed">
+                    <i class="fa-stack-2x fa-solid fa-signal "></i>
+                    <i class="fa-stack-2x fa-solid fa-x" style="color: #f2002e"></i>
+                </span>
+                <span class="fa-stack ice-checking">
+                    <i class="fa-stack-2x fa-solid fa-dice-d6" style="color: rgba(116,192,252,0.56);"></i>
+                    <i class="fa-stack-2x fa-solid fa-question" style="color: white"></i>
+                </span>
+                <span class="fa-stack ice-connected">
+                    <i class="fa-stack-2x fa-solid fa-dice-d6" style="color: rgba(116,192,252,0.56);"></i>
+                    <i class="fa-stack-2x fa-solid fa-check" style="color: #03c403"></i>
+                </span>
+                <span class="fa-stack ice-failed">
+                    <i class="fa-stack-2x fa-solid fa-dice-d6" style="color: rgba(116,192,252,0.56);"></i>
+                    <i class="fa-stack-2x fa-solid fa-x" style="color: #f2002e"></i>
+                </span>
+            </div>
+        </div>
+
+        <div></div>
+
+        <div class="input-container">
+            <i class="input-icon fa-solid fa-comment"></i>
+            <input id="chat" placeholder="Chat">
+        </div>
+
+        <pre id="output">
+
+        </pre>
+    </div>
+</div>
+</body>
+
+<script src="https://kit.fontawesome.com/1f9e46497a.js" crossorigin="anonymous"></script>
+<script src="index.js"></script>
+</html>

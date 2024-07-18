@@ -1,7 +1,13 @@
-body {
+html, body {
     background-color: #2b2b2b;
     color: #e0e0e0;
     font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    padding: 8px;
 }
 
 .row {
@@ -10,8 +16,9 @@ body {
     flex-direction: row;
 }
 
-.full-row {
+body, html, body > div {
     height: 100%;
+    /*overflow: hidden;*/
 }
 
 #stat2 span {
@@ -30,8 +37,6 @@ checking closed completed connected disconnected failed new
 #stat2.ice-failed span.ice-failed {
     display: block;
 }
-
-
 
 .input-container {
     position: relative;
@@ -67,7 +72,9 @@ textarea, #chat {
     border: 1px solid #5c5c5c;
     padding: 8px;
     width: 100%; /* Full width */
+    box-sizing: border-box;
 }
+
 #chat {
     padding-left: 35px;
 }
@@ -76,12 +83,7 @@ textarea, #chat {
     flex: 1;
 }
 
-.answer-container {
-    display: flex;
-    align-items: center;
-}
-
-#fullanswer {
+#fullAnswer {
     flex: 1
 }
 
