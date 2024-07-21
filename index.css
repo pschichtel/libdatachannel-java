@@ -1,13 +1,13 @@
-html, body {
+html {
     background-color: #2b2b2b;
     color: #e0e0e0;
     font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
 }
 
 body {
-    padding: 8px;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
 }
 
 .row {
@@ -16,9 +16,9 @@ body {
     flex-direction: row;
 }
 
-body, html, body > div {
-    height: 100%;
-    /*overflow: hidden;*/
+body > div {
+    padding: 8px;
+    height: calc(100% - 16px);
 }
 
 #stat2 span {
