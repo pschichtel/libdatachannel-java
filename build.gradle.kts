@@ -32,7 +32,7 @@ fun produceVersion(): String {
     }
     val describeOutput = project.providers.exec {
         commandLine("git", "describe", "--tags")
-    }.standardOutput.asText.get().removePrefix("v")
+    }.standardOutput.asText.get().trim().removePrefix("v")
 
     val parts = describeOutput.split("-", limit = 2)
     val tagVersion = parts[0]
