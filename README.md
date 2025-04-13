@@ -28,25 +28,24 @@ module, which includes common architectures and has code to detect which one to 
 var cfg = RTCConfiguration.of("stun.l.google.com:19302");
 // try with resources to cleanup peer when done
 try (var peer = RTCPeerConnection.createPeer(cfg)) {
-        // when complete send sdp to remote peer
-        peer.onGatheringStateChange((pc, state) -> {
+    // when complete send sdp to remote peer
+    peer.onGatheringStateChange((pc, state) -> {
         if (RTC_GATHERING_COMPLETE == state) {
-var sdp = pc.localDescription();
+            var sdp = pc.localDescription();
             System.out.println(sdp);
         }
-                });
-// create data channel
-var channel = peer.createDataChannel("test");
-// wait for local sdp...
-// then set answer from remote peer
+    });
+    // create data channel
+    var channel = peer.createDataChannel("test");
+    // wait for local sdp...
+    // then set answer from remote peer
     peer.setAnswer(readInput());
-        // register message callback
-        channel.onMessage((c, message, size) -> 
-            System.out.println("Incoming message: " + new String(message)));
-// block until channel is closed
-CompletableFuture<Void> future = new CompletableFuture<>();
+    // register message callback
+    channel.onMessage((c, message, size) -> System.out.println("Incoming message: " + new String(message)));
+    // block until channel is closed
+    CompletableFuture<Void> future = new CompletableFuture<>();
     channel.onClose(c -> future.completeAsync(() -> null));
-        future.join();
+    future.join();
 }
 ```
 
