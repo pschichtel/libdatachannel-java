@@ -24,7 +24,13 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
     - name: Build
-      run: ./gradlew --no-configuration-cache --no-parallel mavenCentralDeploy "-PsonatypeUsername=$SONATYPE_USERNAME" "-PsonatypePassword=$SONATYPE_PASSWORD"
+      run: |
+        task=(assemble)
+        if [[ "$GITHUB_REF" =~ refs/tags/v* ]] || [ "$GITHUB_REF" = 'refs/heads/main' ]
+        then
+          task=(mavenCentralDeploy "-PsonatypeUsername=$SONATYPE_USERNAME" "-PsonatypePassword=$SONATYPE_PASSWORD")
+        fi
+        ./gradlew --no-configuration-cache --no-parallel "${task[@]}"
       env:
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
