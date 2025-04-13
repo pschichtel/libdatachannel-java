@@ -47,13 +47,7 @@ dependencies {
 publishing {
     publications {
         register<MavenPublication>("maven") {
-            val rootProjectName = rootProject.name
-            val projectName = project.name
-            artifactId = if (rootProjectName != projectName) {
-                "$rootProjectName-$projectName"
-            } else {
-                rootProjectName
-            }
+            artifactId = project.name
             from(components["java"])
 
             pom {
