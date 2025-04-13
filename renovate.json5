@@ -3,8 +3,8 @@
   "git-submodules": {
     "enabled": true,
   },
-  conan: {
-    enabled: true,
+  "conan": {
+    "enabled": true,
   },
   "customManagers": [
     {
@@ -15,7 +15,7 @@
       // this is hardcoded to linux-x64, but the tag would normally be aligned anyway
       "depNameTemplate": "docker.io/dockcross/linux-x64",
       "datasourceTemplate": "docker",
-      versioningTemplate: "loose"
+      "versioningTemplate": "loose"
     }
   ],
 }

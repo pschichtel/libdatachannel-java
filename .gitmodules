@@ -1,6 +1,7 @@
 [submodule "jni/libdatachannel"]
 	path = jni/libdatachannel
 	url = https://github.com/paullouisageneau/libdatachannel.git
+	tag = v0.22.6
 [submodule "jni/cmake-conan"]
 	path = jni/cmake-conan
 	url = https://github.com/conan-io/cmake-conan.git
