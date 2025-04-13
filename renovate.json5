@@ -3,4 +3,15 @@
   "git-submodules": {
     "enabled": true,
   },
+  "customManagers": [
+    {
+      "fileMatch": ["^build\\.gradle\\.kts$"],
+      "matchStrings": [
+        "dockcrossTag\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      // this is hardcoded to linux-x64, but the tag would normally be aligned anyway
+      "depNameTemplate": "docker.io/dockcross/linux-x64",
+      "datasourceTemplate": "docker",
+    },
+  ]
 }
