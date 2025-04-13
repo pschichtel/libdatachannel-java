@@ -7,17 +7,20 @@ Java wrappers for [libdatachannel](https://github.com/paullouisageneau/libdatach
 
 #### Gradle (build.gradle.kts)
 ```kotlin
-implementation("tel.schich.libdatachannel:libdatachannel-java:0.21.1")
+implementation("tel.schich:libdatachannel-java:0.22.6.1")
 ```
 
 #### Maven (pom.xml)
 ```xml
 <dependency>
-    <groupId>tel.schich.libdatachannel</groupId>
+    <groupId>tel.schich</groupId>
     <artifactId>libdatachannel-java</artifactId>
-    <version>0.21.1</version>
+    <version>0.22.6.1</version>
 </dependency>
 ```
+
+Additionally, pull the architecture-specific native components. Alternatively, use the `libdatachannel-java-arch-detect`
+module, which includes common architectures and has code to detect which one to apply.
 
 ### Offerer example
 
