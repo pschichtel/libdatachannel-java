@@ -3,6 +3,9 @@
   "git-submodules": {
     "enabled": true,
   },
+  conan: {
+    enabled: true,
+  },
   "customManagers": [
     {
       "fileMatch": ["^build\\.gradle\\.kts$"],
