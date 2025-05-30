@@ -3,6 +3,7 @@ from conan import ConanFile
 statically_linked_platforms = {
     "Windows",
     "Macos",
+    "Android",
 }
 
 

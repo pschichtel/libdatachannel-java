@@ -195,13 +195,65 @@ data class BuildTarget(
 )
 
 val targets = listOf(
-    BuildTarget(image = "linux-x64", family = "linux", classifier = "x86_64"),
-    BuildTarget(image = "linux-x86", family = "linux", classifier = "x86_32"),
-    BuildTarget(image = "linux-arm64", family = "linux", classifier = "aarch64"),
-    BuildTarget(image = "windows-static-x64", family = "windows", classifier = "windows-x86_64"),
-    BuildTarget(image = "windows-static-x86", family = "windows", classifier = "windows-x86_32"),
-    BuildTarget(image = "ghcr.io/pschichtel/osxcross/x86_64:20250615-0a476ef", family = "macos", classifier = "macos-x86_64"),
-    BuildTarget(image = "ghcr.io/pschichtel/osxcross/aarch64:20250615-0a476ef", family = "macos", classifier = "macos-arm64"),
+    BuildTarget(
+        image = "linux-x64",
+        family = "linux",
+        classifier = "x86_64",
+    ),
+    BuildTarget(
+        image = "linux-x86",
+        family = "linux",
+        classifier = "x86_32",
+    ),
+    BuildTarget(
+        image = "linux-arm64",
+        family = "linux",
+        classifier = "aarch64",
+    ),
+    BuildTarget(
+        image = "windows-static-x64",
+        family = "windows",
+        classifier = "windows-x86_64",
+    ),
+    BuildTarget(
+        image = "windows-static-x86",
+        family = "windows",
+        classifier = "windows-x86_32",
+    ),
+    BuildTarget(
+        image = "ghcr.io/pschichtel/osxcross/x86_64:20250615-0a476ef",
+        family = "macos",
+        classifier = "macos-x86_64",
+    ),
+    BuildTarget(
+        image = "ghcr.io/pschichtel/osxcross/aarch64:20250615-0a476ef",
+        family = "macos",
+        classifier = "macos-arm64",
+    ),
+    BuildTarget(
+        image = "android-arm",
+        family = "android",
+        classifier = "android-armeabi-v7a",
+        args = listOf("-DANDROID_ABI=armeabi-v7a", "-DANDROID_PLATFORM=android-21"),
+    ),
+    BuildTarget(
+        image = "android-arm64",
+        family = "android",
+        classifier = "android-arm64-v8a",
+        args = listOf("-DANDROID_ABI=arm64-v8a", "-DANDROID_PLATFORM=android-21"),
+    ),
+    BuildTarget(
+        image = "android-x86",
+        family = "android",
+        classifier = "android-x86",
+        args = listOf("-DANDROID_ABI=x86", "-DANDROID_PLATFORM=android-21"),
+    ),
+    BuildTarget(
+        image = "android-x86_64",
+        family = "android",
+        classifier = "android-x86_64",
+        args = listOf("-DANDROID_ABI=x86_64", "-DANDROID_PLATFORM=android-21"),
+    ),
 )
 
 val packageNativeAll by tasks.registering(DefaultTask::class) {
