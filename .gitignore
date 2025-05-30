@@ -8,3 +8,4 @@ out/
 /jni/cmake-build-*/
 /jni/venv
 *.log
+ndk

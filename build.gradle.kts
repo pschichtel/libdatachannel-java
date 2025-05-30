@@ -95,16 +95,30 @@ fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     extraEnv.put("CONAN_HOME", SubstitutingString("\${OUTPUT_DIR}/$conanDir/home"))
     // OpenSSL's makefile constructs broken compiler paths due to CROSS_COMPILE
     extraEnv.put("CROSS_COMPILE", "")
-
+ 
     val relativePathToProject = output.get().asFile.toPath().relativize(jniPath.asFile.toPath()).toString()
     val projectVersionOption = "-DPROJECT_VERSION=${project.version}"
     val releaseOption = "-DCMAKE_BUILD_TYPE=${if (buildReleaseBinaries) "Release" else "Debug"}"
-    val conanProviderOption = SubstitutingString("-DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=\${MOUNT_SOURCE}/jni/cmake-conan/conan_provider.cmake")
-    script = listOf(
-        listOf("conan", "profile", "detect", "-f"),
-        listOf("cmake", relativePathToProject, conanProviderOption, projectVersionOption, releaseOption) + target.args,
-        listOf("make", "-j${project.gradle.startParameter.maxWorkerCount}"),
-    )
+    val conanProviderOption = SubstitutingString("-DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=\${MOUNT_SOURCE}/jni/cmake-conan/conan_provider.cmake")   
+    val androidNdkOption = SubstitutingString("-DCMAKE_ANDROID_NDK=\${MOUNT_SOURCE}/ndk")
+ 
+    script = buildList{         
+        if (target.image.startsWith("android")) {
+            add(listOf("sh", "-c", """
+                if [ ! -d "/work/ndk" ]; then
+                    echo "Downloading Android NDK..."
+                    wget -q https://dl.google.com/android/repository/android-ndk-r26d-linux.zip -O /tmp/ndk.zip
+                    unzip -q /tmp/ndk.zip -d /tmp/
+                    ls /tmp/
+                    mv /tmp/android-ndk-r26d /work/ndk
+                    rm /tmp/ndk.zip
+                fi
+            """.trimIndent()))          
+        }  
+        add(listOf("conan", "profile", "detect", "-f"))
+        add(listOf("cmake", relativePathToProject, conanProviderOption, projectVersionOption, releaseOption, androidNdkOption) + target.args)
+        add(listOf("make", "-j${project.gradle.startParameter.maxWorkerCount}"))
+    }
 
     if (ci) {
         runner(DockerRunner())
@@ -148,6 +162,26 @@ val targets = listOf(
     BuildTarget(image = "linux-arm64", classifier = "aarch64"),
     BuildTarget(image = "windows-static-x64", classifier = "windows-x86_64"),
     BuildTarget(image = "windows-static-x86", classifier = "windows-x86_32"),
+    BuildTarget(
+        image = "android-arm", 
+        classifier = "android-armeabi-v7a",
+        args = listOf("-DANDROID_ABI=armeabi-v7a", "-DANDROID_PLATFORM=android-21"),
+    ),
+    BuildTarget(
+        image = "android-arm64", 
+        classifier = "android-arm64-v8a",
+        args = listOf("-DANDROID_ABI=arm64-v8a", "-DANDROID_PLATFORM=android-21"),
+    ),
+    BuildTarget(
+        image = "android-x86", 
+        classifier = "android-x86",
+        args = listOf("-DANDROID_ABI=x86", "-DANDROID_PLATFORM=android-21"),
+    ),
+    BuildTarget(
+        image = "android-x86_64", 
+        classifier = "android-x86_64",
+        args = listOf("-DANDROID_ABI=x86_64", "-DANDROID_PLATFORM=android-21"),
+    ),
 )
 
 val packageNativeAll by tasks.registering(DefaultTask::class) {
