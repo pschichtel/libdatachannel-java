@@ -161,21 +161,16 @@ val targets = listOf(
     BuildTarget(image = "linux-x86", classifier = "x86_32"),
     BuildTarget(image = "linux-arm64", classifier = "aarch64"),
     BuildTarget(image = "windows-static-x64", classifier = "windows-x86_64"),
-    BuildTarget(image = "windows-static-x86", classifier = "windows-x86_32"),
-    BuildTarget(
-        image = "android-arm", 
-        classifier = "android-armeabi-v7a",
-        args = listOf("-DANDROID_ABI=armeabi-v7a", "-DANDROID_PLATFORM=android-21"),
-    ),
+    // BuildTarget(image = "windows-static-x86", classifier = "windows-x86_32"),
+    // BuildTarget(
+    //     image = "android-arm", 
+    //     classifier = "android-armeabi-v7a",
+    //     args = listOf("-DANDROID_ABI=armeabi-v7a", "-DANDROID_PLATFORM=android-21"),
+    // ),
     BuildTarget(
         image = "android-arm64", 
         classifier = "android-arm64-v8a",
         args = listOf("-DANDROID_ABI=arm64-v8a", "-DANDROID_PLATFORM=android-21"),
-    ),
-    BuildTarget(
-        image = "android-x86", 
-        classifier = "android-x86",
-        args = listOf("-DANDROID_ABI=x86", "-DANDROID_PLATFORM=android-21"),
     ),
     BuildTarget(
         image = "android-x86_64", 
