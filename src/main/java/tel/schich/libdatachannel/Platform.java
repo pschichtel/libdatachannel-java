@@ -30,6 +30,17 @@ class Platform {
         return System.getProperty("os.name").toLowerCase().contains("win");
     }
 
+    public static boolean isAndroid() {
+        try {
+            return System.getProperty("java.specification.vendor").contains("Android") ||
+                    System.getProperty("java.vendor").contains("Android") ||
+                    System.getProperty("java.vm.vendor").contains("Android");
+        } catch (SecurityException e) {
+            return System.getProperty("java.vm.name").toLowerCase().contains("dalvik") ||
+                    System.getProperty("java.vm.name").toLowerCase().contains("art");
+        }
+    }
+
     public static boolean isMacOS() {
         return System.getProperty("os.name").toLowerCase().contains("mac");
     }
@@ -37,8 +48,10 @@ class Platform {
     public static OS getOS() {
         if (isLinux()) {
             return OS.LINUX;
-        }else if (isMacOS()) {
-            return OS.MACOS;  
+        } else if (isAndroid()) {
+            return OS.ANDROID;
+        } else if (isMacOS()) {
+            return OS.MACOS;
         } else if (isWindows()) {
             return OS.WINDOWS;
         } else {
@@ -64,6 +77,9 @@ class Platform {
         if (getOS() == OS.WINDOWS) {
             return "windows-";
         }
+        if (getOS() == OS.ANDROID) {
+            return "android-";
+        }
         if (getOS() == OS.MACOS) {
             return "darwin-";
         }
@@ -85,7 +101,7 @@ class Platform {
             }
             return "riscv32";
         } else if (arch.contains("aarch64") || arch.contains("arm64")) {
-            if (getOS() == OS.MACOS){
+            if (getOS() == OS.MACOS) {
                 return "arm64"; // macOS uses arm64 instead of aarch64
             }
             return "aarch64";
@@ -157,7 +173,8 @@ class Platform {
     public enum OS {
         LINUX,
         WINDOWS,
+        ANDROID,
+        MACOS,
         UNKNOWN,
-        MACOS
     }
 }

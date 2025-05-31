@@ -8,7 +8,10 @@ val nativeLibs by configurations.registering
 
 dependencies {
     api(rootProject)
-    nativeLibs(project(mapOf("path" to rootProject.path, "configuration" to "archDetectConfiguration")))
+    nativeLibs(project(mapOf(
+        "path" to rootProject.path,
+        "configuration" to "archDetectConfiguration",
+    )))
 }
 
 tasks.jar.configure {
