@@ -30,8 +30,21 @@ class Platform {
         return System.getProperty("os.name").toLowerCase().contains("win");
     }
 
+    public static boolean isAndroid() {
+        try {
+            return System.getProperty("java.specification.vendor").contains("Android") ||
+                   System.getProperty("java.vendor").contains("Android") ||
+                   System.getProperty("java.vm.vendor").contains("Android");
+        } catch (SecurityException e) {
+            return System.getProperty("java.vm.name").toLowerCase().contains("dalvik") ||
+                   System.getProperty("java.vm.name").toLowerCase().contains("art");
+        }
+    }
+
     public static OS getOS() {
-        if (isLinux()) {
+        if(isAndroid()){
+            return OS.ANDROID;
+        } else if (isLinux()) {
             return OS.LINUX;
         } else if (isWindows()) {
             return OS.WINDOWS;
@@ -57,6 +70,9 @@ class Platform {
     private static String archPrefixForOs() {
         if (getOS() == OS.WINDOWS) {
             return "windows-";
+        }
+        if (getOS() == OS.ANDROID){
+            return "android-";
         }
         return "";
     }
@@ -143,6 +159,7 @@ class Platform {
     public enum OS {
         LINUX,
         WINDOWS,
-        UNKNOWN
+        UNKNOWN,
+        ANDROID
     }
 }

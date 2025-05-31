@@ -11,7 +11,7 @@ JNIEnv* get_jni_env() {
         return NULL;
     }
     JNIEnv* env;
-    jint result = (*global_JVM)->GetEnv(global_JVM, (void **)&env, JNI_VERSION_10);
+    jint result = (*global_JVM)->GetEnv(global_JVM, (void **)&env, JNI_VERSION_1_6);
     if (result == JNI_EDETACHED) {
         result = (*global_JVM)->AttachCurrentThreadAsDaemon(global_JVM, (void**)&env, NULL);
     }
@@ -36,7 +36,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
     global_JVM = jvm;
     rtcInitLogger(RTC_LOG_VERBOSE, &logger_callback);
     rtcPreload();
-    return JNI_VERSION_10;
+    return JNI_VERSION_1_6;
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
