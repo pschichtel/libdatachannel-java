@@ -28,9 +28,11 @@ void RTC_API handle_channel_message(int channelHandle, const char *message, int 
     if (size < 0) {
         jstring text = (*env)->NewStringUTF(env, message);
         call_tel_schich_libdatachannel_PeerConnectionListener_onChannelTextMessage(env, cb->instance, channelHandle, text);
+        (*env)->DeleteLocalRef(env, text);
     } else {
         jobject buffer = (*env)->NewDirectByteBuffer(env, (void*)message, size);
         call_tel_schich_libdatachannel_PeerConnectionListener_onChannelBinaryMessage(env, cb->instance, channelHandle, buffer);
+        (*env)->DeleteLocalRef(env, buffer); 
     }
     release_jni_env();
 }
@@ -178,7 +180,7 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcRe
     }
     
     void* data = ((uint8_t*)base) + offset;
-
+    
     int result = rtcReceiveMessage(channelHandle, data, &size);
     if (result == RTC_ERR_NOT_AVAIL) {
         return 0;
