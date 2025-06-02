@@ -98,9 +98,9 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
                     free(serverStrings);
                     throw_native_exception(env, "Failed to get ice server string!");
                     return EXCEPTION_THROWN;
+                }
             }
         }
-    }
     }
     
     if (proxyServer != NULL) {
@@ -241,12 +241,25 @@ JNIEXPORT jobject JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rt
     }
     char *remote = malloc(bufSize);
     if (remote == NULL) {
+        free(local);
         THROW_FAILED_MALLOC(env, remote);
         return NULL;
     }
 
-    WRAP_ERROR(env, rtcGetSelectedCandidatePair(peerHandle, local, bufSize, remote, bufSize));
-    return call_tel_schich_libdatachannel_CandidatePair_parse_cstr(env, local, remote);
+    int result = rtcGetSelectedCandidatePair(peerHandle, local, bufSize, remote, bufSize);
+    if (result < 0) {
+        free(local);  
+        free(remote);
+        WRAP_ERROR(env, result);
+        return NULL;
+    }
+    
+    jobject candidatePair = call_tel_schich_libdatachannel_CandidatePair_parse_cstr(env, local, remote);
+    
+    free(local);  
+    free(remote);
+    
+    return candidatePair;
 }
 
 JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_setupPeerConnectionListener(JNIEnv *env, jclass clazz, jint peerHandle, jobject listener) {
@@ -256,6 +269,5 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_setup
     }
     rtcSetUserPointer(peerHandle, jvm_callback);
 
-    return RTC_ERR_SUCCESS;
     return RTC_ERR_SUCCESS;
 }
