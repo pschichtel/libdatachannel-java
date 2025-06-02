@@ -3,12 +3,19 @@
 #include <malloc.h>
 #include <errno.h>
 #include <string.h>
+#include <jni-java-to-c.h>
 
 jstring get_dynamic_string(JNIEnv *env, const char* func_name, get_dynamic_string_func func, int handle) {
     int size = wrap_error(env, "", func(handle, NULL, -1));
     char* memory = malloc(size);
+    if (memory == NULL) {
+        throw_native_exception(env, "Failed to allocate memory for string");
+        return NULL;
+    }
     wrap_error(env, func_name, func(handle, memory, size));
-    return (*env)->NewStringUTF(env, memory);
+    jstring result = (*env)->NewStringUTF(env, memory);
+    free(memory);
+    return result;
 }
 
 jint wrap_error(JNIEnv* env, const char* message, int result) {
@@ -42,4 +49,9 @@ void throw_native_exception(JNIEnv *env, char *msg) {
     int errorNumber = errno;
 
     throw_tel_schich_libdatachannel_exception_NativeOperationException_cstr(env, msg, errorNumber, strerror(errorNumber));
+}
+
+JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcFree(JNIEnv *env, jclass clazz, jlong address) {
+    void* ptr = (void*)(intptr_t)address;
+    free(ptr);
 }

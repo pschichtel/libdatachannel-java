@@ -29,18 +29,20 @@ else()
 endif()
 
 add_link_options(-fvisibility=hidden)
-if(NOT WIN32)
+if(ANDROID)
+    add_link_options(-z noexecstack -static-libgcc -static-libstdc++)
+elseif(NOT WIN32)
     add_link_options(-z noexecstack)
 else()
     add_link_options(-static)
 endif()
 
 add_library(datachannel-java SHARED
-        generated/jni-c-to-java.c
         src/init.c
         src/util.c
         src/native_channel.c
         src/native_peer.c
         src/native_track.c
-        src/callback.c)
+        src/callback.c
+        src/jni-c-to-java.c)
 target_link_libraries(datachannel-java PRIVATE datachannel-static)

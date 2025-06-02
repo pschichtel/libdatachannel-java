@@ -7,4 +7,4 @@ class LibDataChannel(ConanFile):
     generators = "CMakeDeps"
 
     def configure(self):
-        self.options["openssl"].shared = self.settings.os != "Windows"
+        self.options["openssl"].shared = self.settings.os != "Windows" and self.settings.os != "Android"
