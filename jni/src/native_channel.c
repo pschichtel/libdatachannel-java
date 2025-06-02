@@ -173,12 +173,12 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcRe
     if (buffer == NULL) {
         return 0;
     }
-    void* base = (*env)->GetDirectBufferAddress(env, buffer);
+    char* base = (*env)->GetDirectBufferAddress(env, buffer);
     if (base == NULL) {
         return 0;
     }
-    
-    void* data = ((uint8_t*)base) + offset;
+
+    char* data = base + offset;
     
     int result = rtcReceiveMessage(channelHandle, data, &size);
     if (result == RTC_ERR_NOT_AVAIL) {
