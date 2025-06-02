@@ -1,5 +1,6 @@
 #include <rtc/rtc.h>
 #include <jni.h>
+#include "bindings_mng.h"
 #include "global_jvm.h"
 #include "jni-c-to-java.h"
 
@@ -47,6 +48,7 @@ void logger_callback(rtcLogLevel level, const char *message) {
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
     global_JVM = jvm;
+    initializeBindings(get_jni_env());
     rtcInitLogger(RTC_LOG_VERBOSE, &logger_callback);
     rtcPreload();
     return JNI_VERSION_1_6;
@@ -55,5 +57,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
 {
     rtcCleanup();
+    destroyBindings(get_jni_env());
     global_JVM = NULL;
 }
