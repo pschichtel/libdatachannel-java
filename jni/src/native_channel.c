@@ -5,7 +5,7 @@
 #include "jni-c-to-java.h"
 #include "util.h"
 #include "callback.h"
-
+#include <stdint.h>
 void RTC_API handle_channel_open(int channelHandle, void *ptr) {
     DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onChannelOpen, channelHandle);
 }
@@ -27,10 +27,13 @@ void RTC_API handle_channel_message(int channelHandle, const char *message, int 
     if (size < 0) {
         jstring text = (*env)->NewStringUTF(env, message);
         call_tel_schich_libdatachannel_PeerConnectionListener_onChannelTextMessage(env, cb->instance, channelHandle, text);
+        (*env)->DeleteLocalRef(env, text);
     } else {
         jobject buffer = (*env)->NewDirectByteBuffer(env, (void*)message, size);
         call_tel_schich_libdatachannel_PeerConnectionListener_onChannelBinaryMessage(env, cb->instance, channelHandle, buffer);
+        (*env)->DeleteLocalRef(env, buffer); 
     }
+    release_jni_env();
 }
 SET_CALLBACK_INTERFACE_IMPL(rtcSetMessageCallback, handle_channel_message)
 
@@ -123,6 +126,11 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSe
     if (data == NULL) {
         return RTC_ERR_SUCCESS;
     }
+    jlong bufferSize = (*env)->GetDirectBufferCapacity(env, data);
+    if (bufferSize == -1 || offset < 0 || length < 0 || offset + length > bufferSize) {
+        throw_native_exception(env, "Buffer access out of bounds");
+        return EXCEPTION_THROWN;
+    }
     char* buffer = (*env)->GetDirectBufferAddress(env, data);
     if (buffer == NULL) {
         return RTC_ERR_SUCCESS;
@@ -138,13 +146,31 @@ JNIEXPORT jobject JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rt
         return NULL;
     }
     void* buffer = malloc(size);
+    if (buffer == NULL) {
+        throw_native_exception(env, "Failed to allocate memory for message");
+        return NULL;
+    }
     int result = rtcReceiveMessage(channelHandle, buffer, &size);
     if (result == RTC_ERR_NOT_AVAIL) {
+        free(buffer); 
+        return NULL;
+    }
+    if (result < 0) {
+        free(buffer);
+        WRAP_ERROR(env, result);
         return NULL;
     }
     WRAP_ERROR(env, result);
 
-    return (*env)->NewDirectByteBuffer(env, buffer, size);
+    jobject bbf = (*env)->NewDirectByteBuffer(env, buffer, size);
+    if (bbf == NULL) {
+        free(buffer);
+        throw_native_exception(env, "Failed to create direct byte buffer");
+        return NULL;
+    }
+    // ensure the buffer cleanup is managed
+    call_tel_schich_libdatachannel_LibDataChannel_registerForCleanup(env, bbf, (jlong)(intptr_t)buffer);
+    return bbf;
 }
 
 JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcReceiveMessageInto(JNIEnv *env, jclass clazz, jint channelHandle, jobject buffer, jint offset, jint capacity) {
@@ -156,8 +182,9 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcRe
     if (base == NULL) {
         return 0;
     }
-    void* data = base + offset;
-
+    
+    void* data = ((uint8_t*)base) + offset;
+    
     int result = rtcReceiveMessage(channelHandle, data, &size);
     if (result == RTC_ERR_NOT_AVAIL) {
         return 0;
