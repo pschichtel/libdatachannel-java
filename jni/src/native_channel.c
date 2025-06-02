@@ -5,6 +5,7 @@
 #include "jni-c-to-java.h"
 #include "util.h"
 #include "callback.h"
+#include <stdint.h>
 
 void RTC_API handle_channel_open(int channelHandle, void *ptr) {
     DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onChannelOpen, channelHandle);
@@ -156,7 +157,8 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcRe
     if (base == NULL) {
         return 0;
     }
-    void* data = base + offset;
+    
+    void* data = ((uint8_t*)base) + offset;
 
     int result = rtcReceiveMessage(channelHandle, data, &size);
     if (result == RTC_ERR_NOT_AVAIL) {
