@@ -1,0 +1,21 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ '*' ]
+  workflow_dispatch:
+
+jobs:
+  publish-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4.7.3
+        with:
+          branch: gh-pages # The branch the action should deploy to.
+          folder: example/web
+          target-folder: /
