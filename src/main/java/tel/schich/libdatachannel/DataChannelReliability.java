@@ -25,6 +25,8 @@ public class DataChannelReliability {
 
     /**
      * if true, the Data Channel will not enforce message ordering, else it will be ordered
+     *
+     * @return whether this channel is unordered
      */
     public boolean isUnordered() {
         return unordered;
@@ -36,6 +38,8 @@ public class DataChannelReliability {
 
     /**
      * if true, the Data Channel will not enforce strict reliability, else it will be reliable
+     *
+     * @return true if the channel is unreliable
      */
     public boolean isUnreliable() {
         return unreliable;
@@ -46,7 +50,9 @@ public class DataChannelReliability {
     }
 
     /**
-     * if unreliable, time window in milliseconds during which transmissions and retransmissions may occur
+     * if unreliable, the time window in milliseconds during which transmissions and retransmissions may occur
+     *
+     * @return the maximum packet lifetime
      */
     public Duration maxPacketLifeTime() {
         return Duration.ofMillis(maxPacketLifeTime);
@@ -57,7 +63,9 @@ public class DataChannelReliability {
     }
 
     /**
-     * if unreliable and maxPacketLifeTime is 0, maximum number of attempted retransmissions (0 means no retransmission)
+     * if unreliable is true and maxPacketLifeTime is 0, the maximum number of attempted retransmissions (0 means no retransmission)
+     *
+     * @return the maximum number of retransmits
      */
     public int maxRetransmits() {
         return maxRetransmits;

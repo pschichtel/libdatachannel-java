@@ -68,7 +68,7 @@ public class DataChannel implements Closeable {
     }
 
     private void sendMessage(ByteBuffer data, int offset, int length) {
-        if( length < 0 || offset < 0 || offset + length > data.capacity()) {
+        if (length < 0 || offset < 0 || offset + length > data.capacity()) {
             throw new IllegalArgumentException("Buffer access out of bounds");
         }
 
@@ -94,7 +94,7 @@ public class DataChannel implements Closeable {
         byte[] bytes = message.getBytes(StandardCharsets.UTF_8);
         ByteBuffer data = ByteBuffer.allocateDirect(bytes.length + 1);
         data.put(bytes);
-        data.put((byte)0);
+        data.put((byte) 0);
         data.flip();
         sendMessage(data, data.position(), -1);
     }
@@ -104,7 +104,7 @@ public class DataChannel implements Closeable {
      * <p>
      * This function will block until all scheduled callbacks of this channel return (except the one this function might be called in)
      * </p>
-     * No other callback will be called for channel after it returns.
+     * No other callback will be called for the channel after it returns.
      */
     @Override
     public void close() {
@@ -178,9 +178,10 @@ public class DataChannel implements Closeable {
     /**
      * Returns a pending message if available.
      * <p>
-     * The may only be called if the {@link #onMessage} callback is not set.
+     * This method may only be called if the {@link #onMessage} callback is not set.
      * </p>
      *
+     * @param buffer the buffer to receive the message into
      * @return the bytes received or the negative size of the message if the buffer was too small
      */
     public int receiveMessage(ByteBuffer buffer) {
@@ -189,7 +190,7 @@ public class DataChannel implements Closeable {
     }
 
     /**
-     * Returns the available amount, i.e. the total size of messages pending reception with {@link #receiveMessage}.
+     * Returns the available amount, i.e., the total size of messages pending reception with {@link #receiveMessage}.
      * <p>
      * This may only be called if the {@link #onMessage} callback is not set.
      * </p>
@@ -201,7 +202,7 @@ public class DataChannel implements Closeable {
     }
 
     /**
-     * Returns the current buffered amount, i.e. the total size of currently buffered messages waiting to be actually sent in the channel.
+     * Returns the current buffered amount, i.e., the total size of currently buffered messages waiting to be actually sent in the channel.
      * <p>
      * This does not account for the data buffered at the transport level.
      * </p>
@@ -214,7 +215,8 @@ public class DataChannel implements Closeable {
 
     /**
      * Returns the stream ID of this channel
-     *0
+     * 0
+     *
      * @return the stream id
      */
     public int streamId() {

@@ -157,15 +157,15 @@ JNIEXPORT jobject JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rt
     }
     WRAP_ERROR(env, result);
 
-    jobject bbf = (*env)->NewDirectByteBuffer(env, buffer, size);
-    if (bbf == NULL) {
+    jobject byteBuffer = (*env)->NewDirectByteBuffer(env, buffer, size);
+    if (byteBuffer == NULL) {
         free(buffer);
         throw_native_exception(env, "Failed to create direct byte buffer");
         return NULL;
     }
     // ensure the buffer cleanup is managed
-    call_tel_schich_libdatachannel_LibDataChannel_registerForCleanup(env, bbf, (jlong)(intptr_t)buffer);
-    return bbf;
+    call_tel_schich_libdatachannel_LibDataChannel_freeOnGarbageCollection(env, byteBuffer, (jlong)(intptr_t)buffer);
+    return byteBuffer;
 }
 
 JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcReceiveMessageInto(JNIEnv *env, jclass clazz, jint channelHandle, jobject buffer, jint offset, jint capacity) {

@@ -35,6 +35,9 @@ public class DataChannelInitSettings {
 
     /**
      * (optional): a user-defined UTF-8 string representing the Data Channel protocol, empty if NULL
+     *
+     * @param protocol the protocol to indicate
+     * @return fluent interface
      */
     public DataChannelInitSettings withProtocol(String protocol) {
         return new DataChannelInitSettings(reliability, protocol, negotiated, stream);
@@ -46,6 +49,9 @@ public class DataChannelInitSettings {
 
     /**
      * if true, the Data Channel is assumed to be negotiated by the user and won't be negotiated by the WebRTC layer
+     *
+     * @param negotiated whether the channel is user-negotiated
+     * @return fluent interface
      */
     public DataChannelInitSettings withNegotiated(boolean negotiated) {
         return new DataChannelInitSettings(reliability, protocol, negotiated, stream);
@@ -57,6 +63,9 @@ public class DataChannelInitSettings {
 
     /**
      * if manualStream is true, the Data Channel will use it as stream ID, else it is ignored
+     *
+     * @param stream the stream id
+     * @return fluent interface
      */
     public DataChannelInitSettings withStream(Integer stream) {
         return new DataChannelInitSettings(reliability, protocol, negotiated, stream);

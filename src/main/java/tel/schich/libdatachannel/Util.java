@@ -10,10 +10,8 @@ import tel.schich.libdatachannel.exception.UnknownFailureException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toMap;
 import static tel.schich.libdatachannel.exception.LibDataChannelException.ERR_FAILURE;

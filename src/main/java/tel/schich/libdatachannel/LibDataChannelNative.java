@@ -65,5 +65,4 @@ class LibDataChannelNative {
     static native int rtcSetMessageCallback(int channelHandle, boolean set);
     static native int rtcSetBufferedAmountLowCallback(int channelHandle, boolean set);
     static native int rtcSetAvailableCallback(int channelHandle, boolean set);
-    static native void rtcFree(long address);
 }

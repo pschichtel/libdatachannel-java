@@ -3,7 +3,6 @@ package tel.schich.libdatachannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tel.schich.jniaccess.JNIAccess;
-import static tel.schich.libdatachannel.LibDataChannelNative.rtcFree;
 
 import java.lang.ref.Cleaner;
 
@@ -28,8 +27,8 @@ public class LibDataChannel {
     }
 
     /**
-     * @param level
-     * @param message
+     * @param level the log level
+     * @param message the message to log
      * @see <a href="https://github.com/paullouisageneau/libdatachannel/blob/master/DOC.md#rtcinitlogger">Documentation</a>
      */
     @JNIAccess
@@ -54,10 +53,9 @@ public class LibDataChannel {
     }
 
     @JNIAccess
-    static void registerForCleanup(Object buffer, long nativeAddress) {
-        if (buffer == null) return;
-        CLEANER.register(buffer, ()->{
-            rtcFree(nativeAddress);
-        });
+    private static void freeOnGarbageCollection(Object owner, long nativeAddress) {
+        CLEANER.register(owner, () -> freeMemory(nativeAddress));
     }
+
+    private static native void freeMemory(long pointer);
 }

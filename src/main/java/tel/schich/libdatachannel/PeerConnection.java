@@ -35,12 +35,10 @@ import static tel.schich.libdatachannel.Util.parseAddress;
 import static tel.schich.libdatachannel.Util.wrapError;
 import static tel.schich.libdatachannel.exception.LibDataChannelException.ERR_INVALID;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.lang.ref.Cleaner;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
@@ -109,6 +107,7 @@ public class PeerConnection implements Closeable {
      * Remember to {@link #close()} when done.
      *
      * @param config the peer configuration
+     * @param executor the executor to run callbacks on
      * @return the peer connection
      */
     public static PeerConnection createPeer(PeerConnectionConfiguration config, Executor executor) {
@@ -266,6 +265,7 @@ public class PeerConnection implements Closeable {
      *
      * @return the current remote description type
      */
+    @Nullable
     public SessionDescriptionType remoteDescriptionType() {
         return SessionDescriptionType.of(rtcGetRemoteDescriptionType(peerHandle));
     }
@@ -317,6 +317,8 @@ public class PeerConnection implements Closeable {
     /**
      * Retrieves the currently selected candidate pair. The call may fail if the state is not RTC_CONNECTED, and the selected candidate pair might
      * change after connection.
+     *
+     * @return the selected candidate pair
      */
     public CandidatePair selectedCandidatePair() {
         return rtcGetSelectedCandidatePair(peerHandle);
