@@ -27,7 +27,8 @@ void throw_native_exception(JNIEnv *env, char *msg);
     struct jvm_callback* cb = ptr; \
     JNIEnv* env = get_jni_env(); \
     if (env == NULL) return; \
-    target(env, cb->instance, args)
+    target(env, cb->instance, args); \
+    release_jni_env()
 
 #define SETUP_HANDLER(peer, api, target) \
     if (WRAP_ERROR(env, api(peer, target)) == EXCEPTION_THROWN) return EXCEPTION_THROWN
