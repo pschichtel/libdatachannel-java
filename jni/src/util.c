@@ -43,3 +43,8 @@ void throw_native_exception(JNIEnv *env, char *msg) {
 
     throw_tel_schich_libdatachannel_exception_NativeOperationException_cstr(env, msg, errorNumber, strerror(errorNumber));
 }
+
+JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcFree(JNIEnv *env, jclass clazz, jlong address) {
+    void* ptr = (void*)(intptr_t)address;
+    free(ptr);
+}

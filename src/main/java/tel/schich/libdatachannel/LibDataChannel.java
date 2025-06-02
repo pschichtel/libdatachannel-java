@@ -3,6 +3,7 @@ package tel.schich.libdatachannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tel.schich.jniaccess.JNIAccess;
+import static tel.schich.libdatachannel.LibDataChannelNative.rtcFree;
 
 import java.lang.ref.Cleaner;
 
@@ -50,5 +51,13 @@ public class LibDataChannel {
             case 6:
                 LOGGER.trace(message);
         }
+    }
+
+    @JNIAccess
+    static void registerForCleanup(Object buffer, long nativeAddress) {
+        if (buffer == null) return;
+        CLEANER.register(buffer, ()->{
+            rtcFree(nativeAddress);
+        });
     }
 }
