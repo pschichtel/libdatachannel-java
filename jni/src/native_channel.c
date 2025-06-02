@@ -34,7 +34,6 @@ void RTC_API handle_channel_message(int channelHandle, const char *message, int 
         call_tel_schich_libdatachannel_PeerConnectionListener_onChannelBinaryMessage(env, cb->instance, channelHandle, buffer);
         (*env)->DeleteLocalRef(env, buffer); 
     }
-    release_jni_env();
 }
 SET_CALLBACK_INTERFACE_IMPL(rtcSetMessageCallback, handle_channel_message)
 
