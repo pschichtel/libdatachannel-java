@@ -93,9 +93,6 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
     }
     jint result = (jint) rtcCreatePeerConnection(&config);
 
-    if (iceServers != NULL) {
-        (*env)->ReleasePrimitiveArrayCritical(env, iceServers, config.iceServers, 0);
-    }
     if (proxyServer != NULL) {
         (*env)->ReleaseStringUTFChars(env, proxyServer, NULL);
     }

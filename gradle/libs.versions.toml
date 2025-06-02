@@ -1,6 +1,6 @@
 [versions]
 dockcrossPlugin = "0.3.0"
-jniAccessGenerator = "1.1.7"
+jniAccessGenerator = "1.1.8"
 nexusPublishPlugin = "2.0.0"
 
 [libraries]
