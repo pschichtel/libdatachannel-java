@@ -32,7 +32,7 @@ void RTC_API handle_gathering_state_change(int pc, rtcGatheringState state, void
 SET_CALLBACK_INTERFACE_IMPL(rtcSetGatheringStateChangeCallback, handle_gathering_state_change)
 
 void RTC_API handle_signaling_state_change(int pc, rtcSignalingState state, void *ptr) {
-    DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onGatheringStateChange, state);
+    DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onSignalingStateChange, state);
 }
 SET_CALLBACK_INTERFACE_IMPL(rtcSetSignalingStateChangeCallback, handle_signaling_state_change)
 
