@@ -71,40 +71,60 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
             .mtu = mtu,
             .maxMessageSize = maxMessageSize,
     };
+    
+    jstring* serverStrings = NULL;
+    
     if (iceServers != NULL) {
         config.iceServersCount = (*env)->GetArrayLength(env, iceServers);
         if (config.iceServersCount > 0) {
             config.iceServers = malloc(sizeof(char*) * config.iceServersCount);
-            if (config.iceServers == NULL) {
+            serverStrings = malloc(sizeof(jstring) * config.iceServersCount);
+            if (config.iceServers == NULL || serverStrings == NULL) {
+                free(config.iceServers);
+                free(serverStrings);
                 throw_native_exception(env, "Failed to allocate for ice servers!");
                 return EXCEPTION_THROWN;
             }
 
             for (int i = 0; i < config.iceServersCount; i++) {
-                config.iceServers[i] = (*env)->GetStringUTFChars(env, (*env)->GetObjectArrayElement(env, iceServers, i), NULL);
+                serverStrings[i] = (*env)->GetObjectArrayElement(env, iceServers, i); // we need a reference to release later
+                config.iceServers[i] = (*env)->GetStringUTFChars(env, serverStrings[i], NULL);
+                if (config.iceServers[i] == NULL) {
+                    // release everything and throw an exception
+                    for (int j = 0; j < i; j++) {
+                        (*env)->ReleaseStringUTFChars(env, serverStrings[j], config.iceServers[j]);
+                    }
+                    free(config.iceServers);
+                    free(serverStrings);
+                    throw_native_exception(env, "Failed to get ice server string!");
+                    return EXCEPTION_THROWN;
             }
         }
     }
+    }
+    
     if (proxyServer != NULL) {
         config.proxyServer = (*env)->GetStringUTFChars(env, proxyServer, NULL);
     }
     if (bindAddress != NULL) {
         config.bindAddress = (*env)->GetStringUTFChars(env, bindAddress, NULL);
     }
+
     jint result = (jint) rtcCreatePeerConnection(&config);
 
     if (proxyServer != NULL) {
-        (*env)->ReleaseStringUTFChars(env, proxyServer, NULL);
+        (*env)->ReleaseStringUTFChars(env, proxyServer, config.proxyServer);
     }
     if (bindAddress != NULL) {
-        (*env)->ReleaseStringUTFChars(env, bindAddress, NULL);
+        (*env)->ReleaseStringUTFChars(env, bindAddress, config.bindAddress);
     }
 
-    if (config.iceServers != NULL) {
+    if (config.iceServers != NULL && config.iceServersCount > 0) {
         for (int i = 0; i < config.iceServersCount; i++) {
-            (*env)->ReleaseStringUTFChars(env, (*env)->GetObjectArrayElement(env, iceServers, i), config.iceServers[i]);
+            (*env)->ReleaseStringUTFChars(env, serverStrings[i], config.iceServers[i]);
         }
         free(config.iceServers);
+        free(serverStrings);
     }
 
     return result;
