@@ -1,7 +1,7 @@
 #include <jni.h>
 #include <rtc/rtc.h>
 #include <jni-java-to-c.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "jni-c-to-java.h"
 #include "util.h"
 #include "callback.h"
