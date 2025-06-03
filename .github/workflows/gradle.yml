@@ -9,18 +9,66 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-macos:
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: gradle
+    
+    - name: Install dependencies
+      run: |
+        brew update
+        brew install cmake ninja pkg-config openssl conan
+        conan --version
+    
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+    
+    - name: Build macOS Native Libraries
+      run: |
+        ./gradlew packageNativeForDarwinArm64 packageNativeForDarwinX8664 --no-daemon  --no-parallel 
+    
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-prebuilt
+        path: build/libs/libdatachannel-java-*-darwin-*.jar
+        retention-days: 1
+
+  build-publish:
+    runs-on: ubuntu-latest
+    needs: build-macos
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
         java-version: '11'
         distribution: 'temurin'
         cache: gradle
+
+    - name: Download macOS prebuilt libraries
+      uses: actions/download-artifact@v4
+      with:
+        name: macos-prebuilt
+        path: prebuilt
+    
+    - name: List prebuilt libraries
+      run: |
+        mkdir -p prebuilt
+        ls -la prebuilt
+    
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
     - name: Build
