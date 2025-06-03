@@ -119,6 +119,7 @@ fun Jar.baseConfigure(compileTask: TaskProvider<DockcrossRunTask>, buildOutputDi
     from(buildOutputDir) {
         include("native/libdatachannel-java.so")
         include("native/libdatachannel-java.dll")
+        include("native/libdatachannel-java.dylib")
     }
 }
 
@@ -142,13 +143,21 @@ data class BuildTarget(
     val args: List<String> = emptyList(),
 )
 
-val targets = listOf(
-    BuildTarget(image = "linux-x64", classifier = "x86_64"),
-    BuildTarget(image = "linux-x86", classifier = "x86_32"),
-    BuildTarget(image = "linux-arm64", classifier = "aarch64"),
-    BuildTarget(image = "windows-static-x64", classifier = "windows-x86_64"),
-    BuildTarget(image = "windows-static-x86", classifier = "windows-x86_32"),
-)
+val isMacOS = org.gradle.internal.os.OperatingSystem.current().isMacOsX()
+val targets = buildList {
+    add(BuildTarget(image = "linux-x64", classifier = "x86_64"))
+    add(BuildTarget(image = "linux-x86", classifier = "x86_32"))
+    add(BuildTarget(image = "linux-arm64", classifier = "aarch64"))
+    add(BuildTarget(image = "windows-static-x64", classifier = "windows-x86_64"))
+    add(BuildTarget(image = "windows-static-x86", classifier = "windows-x86_32"))
+   
+    if (isMacOS) { // Add macOS targets only when running on macOS
+        add(BuildTarget(image = "host", classifier = "darwin-x86_64", 
+                args = listOf("-DCMAKE_OSX_ARCHITECTURES=x86_64", "-DCMAKE_POLICY_VERSION_MINIMUM=3.5")))
+        add(BuildTarget(image = "host", classifier = "darwin-arm64", 
+                args = listOf("-DCMAKE_OSX_ARCHITECTURES=arm64", "-DCMAKE_POLICY_VERSION_MINIMUM=3.5")))
+    }
+}
 
 val packageNativeAll by tasks.registering(DefaultTask::class) {
     group = nativeGroup
@@ -164,7 +173,10 @@ for (target in targets) {
         unsafeWritableMountSource = true
         containerName = "dockcross-${project.name}-${target.classifier}"
 
-        if (ci) {
+
+        if (target.image == "host" ){
+            runner(NonContainerRunner)
+        }else if (ci) {
             runner(DockerRunner())
         }
     }
