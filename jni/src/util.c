@@ -1,6 +1,6 @@
 #include "util.h"
 #include <jni-c-to-java.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include <jni-java-to-c.h>
