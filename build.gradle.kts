@@ -80,6 +80,45 @@ val buildReleaseBinaries = project.findProperty("libdatachannel.build-release-bi
     ?.toBooleanStrictOrNull()
     ?: !project.version.toString().endsWith("-SNAPSHOT")
 
+
+
+// Detect prebuilt libraries
+project.extra["prebuiltArtifacts"] = mutableListOf<Pair<File, String>>()
+val prebuiltLibsDir = project.layout.projectDirectory.dir("prebuilt")
+if (prebuiltLibsDir.asFile.exists()) {
+    prebuiltLibsDir.asFile.listFiles()?.filter { 
+        it.isFile && it.name.endsWith(".jar") 
+    }?.forEach { jarFile ->
+        // Extract version and classifier from filename
+        val filenameRegex = """libdatachannel-java-(.*)-([^-]+)-([^-]+)\.jar""".toRegex();
+        val matchResult = filenameRegex.find(jarFile.name)
+        if (matchResult != null) {
+            val (version, os, arch) = matchResult.destructured
+            val classifier = "${os}-${arch}"
+            
+            if (version == project.version.toString()) {
+                // Add to publications
+                publishing.publications.withType<MavenPublication>().configureEach {
+                    artifact(jarFile) {
+                        this.classifier = classifier
+                    }
+                }
+                
+                // Add to the prebuilt artifacts list in project.extra
+                val prebuiltArtifacts = project.extra["prebuiltArtifacts"] as MutableList<Pair<File, String>>
+                prebuiltArtifacts.add(jarFile to classifier)
+                
+                logger.lifecycle("Added prebuilt library: ${jarFile.name} with classifier: $classifier")
+            } else {
+                logger.warn("Skipping prebuilt library ${jarFile.name} as its version $version does not match the project version ${project.version}.")
+            }
+        } else {
+            logger.warn("Skipping prebuilt library ${jarFile.name} as it does not match the expected naming convention.")
+        }
+    }
+}
+
+
 fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     group = nativeGroup
 
