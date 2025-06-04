@@ -53,6 +53,8 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
     pthread_key_create(&thread_key, detach_thread);
     global_JVM = jvm;
+    JNIEnv* env = get_jni_env_from_jvm(jvm);
+    module_OnLoad(env);
     rtcInitLogger(RTC_LOG_VERBOSE, &logger_callback);
     rtcPreload();
     return JNI_VERSION;
@@ -61,5 +63,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
 {
     rtcCleanup();
+    JNIEnv* env = get_jni_env();
+    module_OnUnload(env);
     global_JVM = NULL;
 }

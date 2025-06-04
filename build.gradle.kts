@@ -68,7 +68,11 @@ val archDetectConfiguration by configurations.registering {
 
 val jniPath = project.layout.projectDirectory.dir("jni")
 tasks.withType<JavaCompile>().configureEach {
-    options.compilerArgs.addAll(listOf("-Agenerate.jni.headers=true"))
+    val annotationProcessorArgs = listOf(
+        "generate.jni.headers" to "true",
+        "generate.cache.mode.default" to "EAGER_PERSISTENT",
+    ).map { "-A${it.first}=${it.second}" }
+    options.compilerArgs.addAll(annotationProcessorArgs)
     options.headerOutputDirectory = jniPath.dir("generated")
 }
 
