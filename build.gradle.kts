@@ -100,9 +100,10 @@ fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     val projectVersionOption = "-DPROJECT_VERSION=${project.version}"
     val releaseOption = "-DCMAKE_BUILD_TYPE=${if (buildReleaseBinaries) "Release" else "Debug"}"
     val conanProviderOption = SubstitutingString("-DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=\${MOUNT_SOURCE}/jni/cmake-conan/conan_provider.cmake")
+    val policyVersionOption = "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
     script = listOf(
         listOf("conan", "profile", "detect", "-f"),
-        listOf("cmake", relativePathToProject, conanProviderOption, projectVersionOption, releaseOption) + target.args,
+        listOf("cmake", relativePathToProject, policyVersionOption, conanProviderOption, projectVersionOption, releaseOption) + target.args,
         listOf("make", "-j${project.gradle.startParameter.maxWorkerCount}"),
     )
 
