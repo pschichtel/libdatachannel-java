@@ -4,6 +4,8 @@
 #include "global_jvm.h"
 #include "jni-c-to-java.h"
 
+#define JNI_VERSION JNI_VERSION_1_6
+
 static JavaVM* global_JVM;
 static pthread_key_t thread_key;
 
@@ -16,7 +18,7 @@ void detach_thread() {
 
 JNIEnv* get_jni_env_from_jvm(JavaVM* jvm) {
     JNIEnv* env;
-    jint result = (*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_10);
+    jint result = (*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION);
     if (result == JNI_EDETACHED) {
         result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void**)&env, NULL);
         if (result == JNI_OK) {
@@ -53,7 +55,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
     global_JVM = jvm;
     rtcInitLogger(RTC_LOG_VERBOSE, &logger_callback);
     rtcPreload();
-    return JNI_VERSION_10;
+    return JNI_VERSION;
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
