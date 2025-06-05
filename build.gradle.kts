@@ -1,4 +1,8 @@
+import org.gradle.internal.declarativedsl.intrinsics.listOf
+import tel.schich.dockcross.execute.CliDispatcher
+import tel.schich.dockcross.execute.ContainerRunner
 import tel.schich.dockcross.execute.DockerRunner
+import tel.schich.dockcross.execute.ExecutionRequest
 import tel.schich.dockcross.execute.NonContainerRunner
 import tel.schich.dockcross.execute.SubstitutingString
 import tel.schich.dockcross.tasks.DockcrossRunTask
@@ -8,6 +12,23 @@ plugins {
     id("tel.schich.libdatachannel.convention.common")
     alias(libs.plugins.dockcross)
     alias(libs.plugins.nexusPublish)
+}
+
+class RemoteSshRunner(private val sshTarget: String, private val workDir: String) : ContainerRunner {
+    private val singleQuoteRegex = "'".toRegex()
+
+    private fun simpleQuote(s: CharSequence) =
+        s.replace(singleQuoteRegex, "\\'")
+
+    override fun run(
+        cli: CliDispatcher,
+        request: ExecutionRequest
+    ) {
+        val encodedEnv = request.extraEnv.map { "${it.key}='${simpleQuote(it.value)}'" }.joinToString(separator = " ")
+        val encodedCommand = request.command.joinToString(separator = " ") { "'${simpleQuote(it)}'" }
+        val sshCommand = "cd '${simpleQuote(workDir)}'; $encodedEnv $encodedCommand"
+        cli.execute(request.workdir, listOf("ssh", sshTarget, sshCommand), emptyMap())
+    }
 }
 
 fun extractLibDataChannelVersion(): String {
