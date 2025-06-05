@@ -30,9 +30,15 @@ class Platform {
         return System.getProperty("os.name").toLowerCase().contains("win");
     }
 
+    public static boolean isMacOS() {
+        return System.getProperty("os.name").toLowerCase().contains("mac");
+    }
+
     public static OS getOS() {
         if (isLinux()) {
             return OS.LINUX;
+        }else if (isMacOS()) {
+            return OS.MACOS;  
         } else if (isWindows()) {
             return OS.WINDOWS;
         } else {
@@ -58,6 +64,9 @@ class Platform {
         if (getOS() == OS.WINDOWS) {
             return "windows-";
         }
+        if (getOS() == OS.MACOS) {
+            return "darwin-";
+        }
         return "";
     }
 
@@ -76,6 +85,9 @@ class Platform {
             }
             return "riscv32";
         } else if (arch.contains("aarch64") || arch.contains("arm64")) {
+            if (getOS() == OS.MACOS){
+                return "arm64"; // macOS uses arm64 instead of aarch64
+            }
             return "aarch64";
         }
         return arch;
@@ -89,6 +101,8 @@ class Platform {
         final String libName = "lib" + name;
         if (getOS() == OS.WINDOWS) {
             return libName + ".dll";
+        } else if (getOS() == OS.MACOS) {
+            return libName + ".dylib";
         }
         return libName + ".so";
     }
@@ -143,6 +157,7 @@ class Platform {
     public enum OS {
         LINUX,
         WINDOWS,
-        UNKNOWN
+        UNKNOWN,
+        MACOS
     }
 }

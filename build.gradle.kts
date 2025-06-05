@@ -105,6 +105,45 @@ val buildReleaseBinaries = project.findProperty("libdatachannel.build-release-bi
     ?.toBooleanStrictOrNull()
     ?: !project.version.toString().endsWith("-SNAPSHOT")
 
+
+
+// Detect prebuilt libraries
+project.extra["prebuiltArtifacts"] = mutableListOf<Pair<File, String>>()
+val prebuiltLibsDir = project.layout.projectDirectory.dir("prebuilt")
+if (prebuiltLibsDir.asFile.exists()) {
+    prebuiltLibsDir.asFile.listFiles()?.filter { 
+        it.isFile && it.name.endsWith(".jar") 
+    }?.forEach { jarFile ->
+        // Extract version and classifier from filename
+        val filenameRegex = """libdatachannel-java-(.*)-([^-]+)-([^-]+)\.jar""".toRegex();
+        val matchResult = filenameRegex.find(jarFile.name)
+        if (matchResult != null) {
+            val (version, os, arch) = matchResult.destructured
+            val classifier = "${os}-${arch}"
+            
+            if (version == project.version.toString()) {
+                // Add to publications
+                publishing.publications.withType<MavenPublication>().configureEach {
+                    artifact(jarFile) {
+                        this.classifier = classifier
+                    }
+                }
+                
+                // Add to the prebuilt artifacts list in project.extra
+                val prebuiltArtifacts = project.extra["prebuiltArtifacts"] as MutableList<Pair<File, String>>
+                prebuiltArtifacts.add(jarFile to classifier)
+                
+                logger.lifecycle("Added prebuilt library: ${jarFile.name} with classifier: $classifier")
+            } else {
+                logger.warn("Skipping prebuilt library ${jarFile.name} as its version $version does not match the project version ${project.version}.")
+            }
+        } else {
+            logger.warn("Skipping prebuilt library ${jarFile.name} as it does not match the expected naming convention.")
+        }
+    }
+}
+
+
 fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     group = nativeGroup
 
@@ -145,6 +184,7 @@ fun Jar.baseConfigure(compileTask: TaskProvider<DockcrossRunTask>, buildOutputDi
     from(buildOutputDir) {
         include("native/libdatachannel-java.so")
         include("native/libdatachannel-java.dll")
+        include("native/libdatachannel-java.dylib")
     }
 }
 
@@ -168,13 +208,21 @@ data class BuildTarget(
     val args: List<String> = emptyList(),
 )
 
-val targets = listOf(
-    BuildTarget(image = "linux-x64", classifier = "x86_64"),
-    BuildTarget(image = "linux-x86", classifier = "x86_32"),
-    BuildTarget(image = "linux-arm64", classifier = "aarch64"),
-    BuildTarget(image = "windows-static-x64", classifier = "windows-x86_64"),
-    BuildTarget(image = "windows-static-x86", classifier = "windows-x86_32"),
-)
+val isMacOS = org.gradle.internal.os.OperatingSystem.current().isMacOsX()
+val targets = buildList {
+    add(BuildTarget(image = "linux-x64", classifier = "x86_64"))
+    add(BuildTarget(image = "linux-x86", classifier = "x86_32"))
+    add(BuildTarget(image = "linux-arm64", classifier = "aarch64"))
+    add(BuildTarget(image = "windows-static-x64", classifier = "windows-x86_64"))
+    add(BuildTarget(image = "windows-static-x86", classifier = "windows-x86_32"))
+   
+    if (isMacOS) { // Add macOS targets only when running on macOS
+        add(BuildTarget(image = "host", classifier = "darwin-x86_64", 
+                args = listOf("-DCMAKE_OSX_ARCHITECTURES=x86_64", "-DCMAKE_POLICY_VERSION_MINIMUM=3.5")))
+        add(BuildTarget(image = "host", classifier = "darwin-arm64", 
+                args = listOf("-DCMAKE_OSX_ARCHITECTURES=arm64", "-DCMAKE_POLICY_VERSION_MINIMUM=3.5")))
+    }
+}
 
 val packageNativeAll by tasks.registering(DefaultTask::class) {
     group = nativeGroup
@@ -190,7 +238,10 @@ for (target in targets) {
         unsafeWritableMountSource = true
         containerName = "dockcross-${project.name}-${target.classifier}"
 
-        if (ci) {
+
+        if (target.image == "host" ){
+            runner(NonContainerRunner)
+        }else if (ci) {
             runner(DockerRunner())
         }
     }
