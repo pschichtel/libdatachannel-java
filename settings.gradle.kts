@@ -2,6 +2,12 @@ rootProject.name = "libdatachannel-java"
 
 pluginManagement {
     includeBuild("conventions")
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+    }
 }
 
 plugins {

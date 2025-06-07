@@ -1,34 +1,16 @@
 import org.gradle.internal.declarativedsl.intrinsics.listOf
-import tel.schich.dockcross.execute.CliDispatcher
-import tel.schich.dockcross.execute.ContainerRunner
 import tel.schich.dockcross.execute.DockerRunner
-import tel.schich.dockcross.execute.ExecutionRequest
 import tel.schich.dockcross.execute.NonContainerRunner
+import tel.schich.dockcross.execute.RemoteSshRunner
 import tel.schich.dockcross.execute.SubstitutingString
 import tel.schich.dockcross.tasks.DockcrossRunTask
+import java.net.URI
 import java.nio.file.Files
 
 plugins {
     id("tel.schich.libdatachannel.convention.common")
     alias(libs.plugins.dockcross)
     alias(libs.plugins.nexusPublish)
-}
-
-class RemoteSshRunner(private val sshTarget: String, private val workDir: String) : ContainerRunner {
-    private val singleQuoteRegex = "'".toRegex()
-
-    private fun simpleQuote(s: CharSequence) =
-        s.replace(singleQuoteRegex, "\\'")
-
-    override fun run(
-        cli: CliDispatcher,
-        request: ExecutionRequest
-    ) {
-        val encodedEnv = request.extraEnv.map { "${it.key}='${simpleQuote(it.value)}'" }.joinToString(separator = " ")
-        val encodedCommand = request.command.joinToString(separator = " ") { "'${simpleQuote(it)}'" }
-        val sshCommand = "cd '${simpleQuote(workDir)}'; $encodedEnv $encodedCommand"
-        cli.execute(request.workdir, listOf("ssh", sshTarget, sshCommand), emptyMap())
-    }
 }
 
 fun extractLibDataChannelVersion(): String {
@@ -105,6 +87,31 @@ val buildReleaseBinaries = project.findProperty("libdatachannel.build-release-bi
     ?.toBooleanStrictOrNull()
     ?: !project.version.toString().endsWith("-SNAPSHOT")
 
+fun DockcrossRunTask.configureSshRemoteBuild(target: BuildTarget) {
+    if (!ci) {
+        return
+    }
+
+    fun findTarget(scope: String?): URI? {
+        return project.findProperty("libdatachannel${scope?.let { ".$it" }.orEmpty()}.ssh-target")
+            ?.toString()
+            ?.let(::URI)
+    }
+
+    val sshTarget = findTarget(scope = target.classifier)
+        ?: findTarget(scope = target.family)
+        ?: findTarget(scope = null)
+        ?: return
+
+    val sshRunner = RemoteSshRunner(sshTarget) {
+        add("--exclude", "**/.git")
+        // this intentionally only includes the root-.gitignore, so that the generated jni files are included
+        add("--filter=.- .gitignore")
+    }
+    runner(sshRunner)
+    image = ""
+}
+
 fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     group = nativeGroup
 
@@ -132,6 +139,8 @@ fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
         listOf("make", "-j${project.gradle.startParameter.maxWorkerCount}"),
     )
 
+    configureSshRemoteBuild(target)
+
     if (ci) {
         runner(DockerRunner())
     }
@@ -151,7 +160,7 @@ fun Jar.baseConfigure(compileTask: TaskProvider<DockcrossRunTask>, buildOutputDi
 val dockcrossOutputDir: Directory = project.layout.buildDirectory.get().dir("dockcross")
 val nativeForHostOutputDir: Directory = dockcrossOutputDir.dir("host")
 val compileNativeForHost by tasks.registering(DockcrossRunTask::class) {
-    baseConfigure(nativeForHostOutputDir, BuildTarget(image = "host", classifier = "host"))
+    baseConfigure(nativeForHostOutputDir, BuildTarget(image = "host", family = "host", classifier = "host"))
     unsafeWritableMountSource = true
     runner(NonContainerRunner)
 }
@@ -163,17 +172,18 @@ val packageNativeForHost by tasks.registering(Jar::class) {
 
 data class BuildTarget(
     val image: String,
+    val family: String,
     val classifier: String,
     val env: Map<String, String> = emptyMap(),
     val args: List<String> = emptyList(),
 )
 
 val targets = listOf(
-    BuildTarget(image = "linux-x64", classifier = "x86_64"),
-    BuildTarget(image = "linux-x86", classifier = "x86_32"),
-    BuildTarget(image = "linux-arm64", classifier = "aarch64"),
-    BuildTarget(image = "windows-static-x64", classifier = "windows-x86_64"),
-    BuildTarget(image = "windows-static-x86", classifier = "windows-x86_32"),
+    BuildTarget(image = "linux-x64", family = "linux", classifier = "x86_64"),
+    BuildTarget(image = "linux-x86", family = "linux", classifier = "x86_32"),
+    BuildTarget(image = "linux-arm64", family = "linux", classifier = "aarch64"),
+    BuildTarget(image = "windows-static-x64", family = "windows", classifier = "windows-x86_64"),
+    BuildTarget(image = "windows-static-x86", family = "windows", classifier = "windows-x86_32"),
 )
 
 val packageNativeAll by tasks.registering(DefaultTask::class) {
