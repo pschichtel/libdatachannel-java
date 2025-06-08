@@ -1,5 +1,5 @@
 [versions]
-dockcrossPlugin = "0.4.1"
+dockcrossPlugin = "0.4.2"
 jniAccessGenerator = "1.2.0"
 nexusPublishPlugin = "2.0.0"
 
