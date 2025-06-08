@@ -16,12 +16,18 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Gradle Cache
+      id: gradle-cache
+      uses: actions/cache@v4
+      with:
+        path: .gradle-ci
+        key: gradle-cache
+
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
         java-version: '11'
         distribution: 'temurin'
-        cache: gradle
 
     - name: Install dependencies
       run: |
@@ -34,14 +40,14 @@ jobs:
 
     - name: Build macOS Native Libraries
       run: |
-        ./gradlew packageNativeForMacosArm64 packageNativeForMacosX8664 
+        ./gradlew -Dgradle.user.home=.gradle-ci packageNativeForMacosArm64 packageNativeForMacosX8664 
 
-#    - name: Upload macOS artifacts
-#      uses: actions/upload-artifact@v4
-#      with:
-#        name: macos-cache
-#        path: .gradle-ci
-#        retention-days: 1
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-cache
+        path: .gradle-ci
+        retention-days: 1
   build:
     runs-on: ubuntu-latest
     needs: build-macos
@@ -50,17 +56,23 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Gradle Cache
+      id: gradle-cache
+      uses: actions/cache@v4
+      with:
+        path: .gradle-ci
+        key: gradle-cache
+
+    - name: Download macOS prebuilt libraries
+      uses: actions/download-artifact@v4
+      with:
+        name: macos-cache
+
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
         java-version: '11'
         distribution: 'temurin'
-        cache: gradle
-
-#    - name: Download macOS prebuilt libraries
-#      uses: actions/download-artifact@v4
-#      with:
-#        name: macos-cache
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
@@ -72,7 +84,7 @@ jobs:
         then
           task=(mavenCentralDeploy "-PsonatypeUsername=$SONATYPE_USERNAME" "-PsonatypePassword=$SONATYPE_PASSWORD")
         fi
-        ./gradlew "${task[@]}"
+        ./gradlew -Dgradle.user.home=.gradle-ci "${task[@]}"
       env:
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
