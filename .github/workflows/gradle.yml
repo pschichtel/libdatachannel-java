@@ -34,14 +34,14 @@ jobs:
 
     - name: Build macOS Native Libraries
       run: |
-        ./gradlew -Dgradle.user.home=.gradle-ci packageNativeForMacosArm64 packageNativeForMacosX8664 
+        ./gradlew packageNativeForMacosArm64 packageNativeForMacosX8664 
 
-    - name: Upload macOS artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: macos-cache
-        path: .gradle-ci
-        retention-days: 1
+#    - name: Upload macOS artifacts
+#      uses: actions/upload-artifact@v4
+#      with:
+#        name: macos-cache
+#        path: .gradle-ci
+#        retention-days: 1
   build:
     runs-on: ubuntu-latest
     needs: build-macos
@@ -57,10 +57,10 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: Download macOS prebuilt libraries
-      uses: actions/download-artifact@v4
-      with:
-        name: macos-cache
+#    - name: Download macOS prebuilt libraries
+#      uses: actions/download-artifact@v4
+#      with:
+#        name: macos-cache
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
@@ -72,7 +72,7 @@ jobs:
         then
           task=(mavenCentralDeploy "-PsonatypeUsername=$SONATYPE_USERNAME" "-PsonatypePassword=$SONATYPE_PASSWORD")
         fi
-        ./gradlew -Dgradle.user.home=.gradle-ci "${task[@]}"
+        ./gradlew "${task[@]}"
       env:
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
