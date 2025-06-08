@@ -199,9 +199,9 @@ for (target in targets) {
     }
 
     if (ci) {
+        val previous = previousCompileNative
         compileNative {
             runner(DockerRunner())
-            val previous = previousCompileNative
             if (previous != null) {
                 mustRunAfter(previous)
             }
