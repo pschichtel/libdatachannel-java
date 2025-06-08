@@ -9,20 +9,62 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-macos:
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
+
     - name: Set up JDK
       uses: actions/setup-java@v4
       with:
         java-version: '11'
         distribution: 'temurin'
         cache: gradle
+
+    - name: Install dependencies
+      run: |
+        brew update
+        brew install cmake conan
+        conan --version
+
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
+
+    - name: Build macOS Native Libraries
+      run: |
+        ./gradlew -Dgradle.user.home=.gradle-ci packageNativeForMacosArm64 packageNativeForMacosX8664 
+
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-cache
+        path: .gradle-ci
+        retention-days: 1
+  build:
+    runs-on: ubuntu-latest
+    needs: build-macos
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Download macOS prebuilt libraries
+      uses: actions/download-artifact@v4
+      with:
+        name: macos-cache
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
     - name: Build
       run: |
         task=(assemble)
@@ -30,7 +72,7 @@ jobs:
         then
           task=(mavenCentralDeploy "-PsonatypeUsername=$SONATYPE_USERNAME" "-PsonatypePassword=$SONATYPE_PASSWORD")
         fi
-        ./gradlew "${task[@]}"
+        ./gradlew -Dgradle.user.home=.gradle-ci "${task[@]}"
       env:
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
