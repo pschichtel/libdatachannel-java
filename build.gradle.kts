@@ -115,9 +115,27 @@ fun DockcrossRunTask.configureSshRemoteBuild(target: BuildTarget) {
 
 fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     group = nativeGroup
-
-    image = target.image
     dockcrossTag = "20250109-7bf589c"
+
+    when {
+        target.image == null -> {
+            image = "dummy"
+        }
+        '/' in target.image || ':' in target.image -> {
+            val parts = target.image.split(':', limit = 2)
+            dockcrossRepository = parts[0]
+            dockcrossTag = if (parts.size == 2) {
+                parts[1]
+            } else {
+                "latest"
+            }
+            image = "dummy"
+        }
+        else -> {
+            image = target.image
+        }
+    }
+
     inputs.dir(jniPath)
 
     dependsOn(tasks.compileJava)
@@ -135,7 +153,7 @@ fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     val conanProviderOption = SubstitutingString("-DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=\${MOUNT_SOURCE}/jni/cmake-conan/conan_provider.cmake")
     val policyVersionOption = "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
     script = listOf(
-        listOf("conan", "profile", "detect", "-f"),
+        listOf(SubstitutingString("\${MOUNT_SOURCE}/jni/setup-conan-profile.sh")),
         listOf("cmake", relativePathToProject, policyVersionOption, conanProviderOption, projectVersionOption, releaseOption) + target.args,
         listOf("make", "-j${project.gradle.startParameter.maxWorkerCount}"),
     )
@@ -151,13 +169,14 @@ fun Jar.baseConfigure(compileTask: TaskProvider<DockcrossRunTask>, buildOutputDi
     from(buildOutputDir) {
         include("native/libdatachannel-java.so")
         include("native/libdatachannel-java.dll")
+        include("native/libdatachannel-java.dylib")
     }
 }
 
 val dockcrossOutputDir: Directory = project.layout.buildDirectory.get().dir("dockcross")
 val nativeForHostOutputDir: Directory = dockcrossOutputDir.dir("host")
 val compileNativeForHost by tasks.registering(DockcrossRunTask::class) {
-    baseConfigure(nativeForHostOutputDir, BuildTarget(image = "host", family = "host", classifier = "host"))
+    baseConfigure(nativeForHostOutputDir, BuildTarget(image = null, family = "host", classifier = "host"))
     unsafeWritableMountSource = true
     runner(NonContainerRunner)
 }
@@ -168,7 +187,7 @@ val packageNativeForHost by tasks.registering(Jar::class) {
 }
 
 data class BuildTarget(
-    val image: String,
+    val image: String?,
     val family: String,
     val classifier: String,
     val env: Map<String, String> = emptyMap(),
@@ -181,6 +200,8 @@ val targets = listOf(
     BuildTarget(image = "linux-arm64", family = "linux", classifier = "aarch64"),
     BuildTarget(image = "windows-static-x64", family = "windows", classifier = "windows-x86_64"),
     BuildTarget(image = "windows-static-x86", family = "windows", classifier = "windows-x86_32"),
+    BuildTarget(image = "ghcr.io/pschichtel/osxcross/x86_64:20250615-0a476ef", family = "macos", classifier = "macos-x86_64"),
+    BuildTarget(image = "ghcr.io/pschichtel/osxcross/aarch64:20250615-0a476ef", family = "macos", classifier = "macos-arm64"),
 )
 
 val packageNativeAll by tasks.registering(DefaultTask::class) {
@@ -201,15 +222,21 @@ for (target in targets) {
     if (ci) {
         val previous = previousCompileNative
         compileNative {
-            runner(DockerRunner())
+            if (target.image == null) {
+                runner(NonContainerRunner)
+            } else {
+                runner(DockerRunner())
+            }
             if (previous != null) {
                 mustRunAfter(previous)
             }
 
-            val execOps = project.serviceOf<ExecOperations>()
-            doLast {
-                execOps.exec {
-                    commandLine("docker", "image", "prune", "-af")
+            if (target.image != null) {
+                val execOps = project.serviceOf<ExecOperations>()
+                doLast {
+                    execOps.exec {
+                        commandLine("docker", "image", "prune", "-af")
+                    }
                 }
             }
         }
