@@ -201,8 +201,9 @@ for (target in targets) {
     if (ci) {
         compileNative {
             runner(DockerRunner())
-            if (previousCompileNative != null) {
-                mustRunAfter(previousCompileNative)
+            val previous = previousCompileNative
+            if (previous != null) {
+                mustRunAfter(previous)
             }
 
             val execOps = project.serviceOf<ExecOperations>()
