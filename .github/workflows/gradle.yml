@@ -20,7 +20,10 @@ jobs:
       id: gradle-cache
       uses: actions/cache@v4
       with:
-        path: .gradle-ci
+        path: |
+          .gradle-ci
+          .gradle
+          build
         key: gradle-cache
 
     - name: Set up JDK
@@ -46,7 +49,10 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: macos-cache
-        path: .gradle-ci
+        path: |
+          .gradle-ci
+          .gradle
+          build
         retention-days: 1
         include-hidden-files: true
   build:
@@ -61,7 +67,10 @@ jobs:
       id: gradle-cache
       uses: actions/cache@v4
       with:
-        path: .gradle-ci
+        path: |
+          .gradle-ci
+          .gradle
+          build
         key: gradle-cache
 
     - name: Download macOS prebuilt libraries
