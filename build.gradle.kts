@@ -140,10 +140,6 @@ fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     )
 
     configureSshRemoteBuild(target)
-
-    if (ci) {
-        runner(DockerRunner())
-    }
 }
 
 fun Jar.baseConfigure(compileTask: TaskProvider<DockcrossRunTask>, buildOutputDir: Directory) {
@@ -190,7 +186,7 @@ val packageNativeAll by tasks.registering(DefaultTask::class) {
     group = nativeGroup
 }
 
-
+var previousCompileNative: TaskProvider<DockcrossRunTask>? = null
 for (target in targets) {
     val outputDir: Directory = dockcrossOutputDir.dir(target.classifier)
     val taskSuffix = target.classifier.split("[_-]".toRegex())
@@ -199,10 +195,24 @@ for (target in targets) {
         baseConfigure(outputDir, target)
         unsafeWritableMountSource = true
         containerName = "dockcross-${project.name}-${target.classifier}"
+    }
 
-        if (ci) {
+    if (ci) {
+        compileNative {
             runner(DockerRunner())
+            if (previousCompileNative != null) {
+                mustRunAfter(previousCompileNative)
+            }
+
+            val execOps = project.serviceOf<ExecOperations>()
+            doLast {
+                execOps.exec {
+                    commandLine("docker", "image", "prune", "-af")
+                }
+            }
         }
+
+        previousCompileNative = compileNative
     }
 
     val packageNative = tasks.register("packageNativeFor$taskSuffix", Jar::class) {
