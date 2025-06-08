@@ -116,7 +116,7 @@ fun DockcrossRunTask.configureSshRemoteBuild(target: BuildTarget) {
 fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     group = nativeGroup
 
-    image = target.image
+    image = target.image ?: "dummy"
     dockcrossTag = "20250109-7bf589c"
     inputs.dir(jniPath)
 
@@ -151,13 +151,14 @@ fun Jar.baseConfigure(compileTask: TaskProvider<DockcrossRunTask>, buildOutputDi
     from(buildOutputDir) {
         include("native/libdatachannel-java.so")
         include("native/libdatachannel-java.dll")
+        include("native/libdatachannel-java.dylib")
     }
 }
 
 val dockcrossOutputDir: Directory = project.layout.buildDirectory.get().dir("dockcross")
 val nativeForHostOutputDir: Directory = dockcrossOutputDir.dir("host")
 val compileNativeForHost by tasks.registering(DockcrossRunTask::class) {
-    baseConfigure(nativeForHostOutputDir, BuildTarget(image = "host", family = "host", classifier = "host"))
+    baseConfigure(nativeForHostOutputDir, BuildTarget(image = null, family = "host", classifier = "host"))
     unsafeWritableMountSource = true
     runner(NonContainerRunner)
 }
@@ -168,12 +169,25 @@ val packageNativeForHost by tasks.registering(Jar::class) {
 }
 
 data class BuildTarget(
-    val image: String,
+    val image: String?,
     val family: String,
     val classifier: String,
     val env: Map<String, String> = emptyMap(),
     val args: List<String> = emptyList(),
 )
+
+val enableMacOs = (findProperty("libdatachannel.macos.enabled") as? String ?: "false")
+    .toBooleanStrictOrNull()
+    ?: false
+
+val macOsTargets = if (ci || enableMacOs) {
+    listOf(
+        BuildTarget(image = null, family = "macos", classifier = "macos-x86_64", args = listOf("-DCMAKE_OSX_ARCHITECTURES=x86_64")),
+        BuildTarget(image = null, family = "macos", classifier = "macos-arm64", args = listOf("-DCMAKE_OSX_ARCHITECTURES=arm64")),
+    )
+} else {
+    emptyList()
+}
 
 val targets = listOf(
     BuildTarget(image = "linux-x64", family = "linux", classifier = "x86_64"),
@@ -181,7 +195,7 @@ val targets = listOf(
     BuildTarget(image = "linux-arm64", family = "linux", classifier = "aarch64"),
     BuildTarget(image = "windows-static-x64", family = "windows", classifier = "windows-x86_64"),
     BuildTarget(image = "windows-static-x86", family = "windows", classifier = "windows-x86_32"),
-)
+) + macOsTargets
 
 val packageNativeAll by tasks.registering(DefaultTask::class) {
     group = nativeGroup
@@ -201,15 +215,21 @@ for (target in targets) {
     if (ci) {
         val previous = previousCompileNative
         compileNative {
-            runner(DockerRunner())
+            if (target.image == null) {
+                runner(NonContainerRunner)
+            } else {
+                runner(DockerRunner())
+            }
             if (previous != null) {
                 mustRunAfter(previous)
             }
 
-            val execOps = project.serviceOf<ExecOperations>()
-            doLast {
-                execOps.exec {
-                    commandLine("docker", "image", "prune", "-af")
+            if (target.image != null) {
+                val execOps = project.serviceOf<ExecOperations>()
+                doLast {
+                    execOps.exec {
+                        commandLine("docker", "image", "prune", "-af")
+                    }
                 }
             }
         }
