@@ -18,6 +18,7 @@ tasks.jar.configure {
         from(zipTree(jar.file)) {
             include("native/*.so")
             include("native/*.dll")
+            include("native/*.dylib")
             into(classifier)
         }
     }
