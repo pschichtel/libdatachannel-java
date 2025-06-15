@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.13)
 project(libdatachannel_jni C CXX)
 
 set(CMAKE_C_STANDARD 11)
