@@ -30,7 +30,7 @@ jobs:
         then
           task=(mavenCentralDeploy "-PsonatypeUsername=$SONATYPE_USERNAME" "-PsonatypePassword=$SONATYPE_PASSWORD")
         fi
-        ./gradlew "${task[@]}"
+        ./gradlew --no-configuration-cache "${task[@]}"
       env:
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
