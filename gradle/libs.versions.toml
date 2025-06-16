@@ -1,11 +1,9 @@
 [versions]
 dockcrossPlugin = "0.4.2"
 jniAccessGenerator = "1.2.0"
-nexusPublishPlugin = "2.0.0"
 
 [libraries]
 jniAccessGenerator = { module = "tel.schich:jni-access-generator", version.ref = "jniAccessGenerator" }
 
 [plugins]
 dockcross = { id = "tel.schich.dockcross", version.ref = "dockcrossPlugin" }
-nexusPublish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexusPublishPlugin" }

@@ -11,7 +11,6 @@ import java.nio.file.Files
 plugins {
     id("tel.schich.libdatachannel.convention.common")
     alias(libs.plugins.dockcross)
-    alias(libs.plugins.nexusPublish)
 }
 
 fun extractLibDataChannelVersion(): String {
@@ -273,12 +272,6 @@ publishing.publications.withType<MavenPublication>().configureEach {
     }
 }
 
-nexusPublishing {
-    this.repositories {
-        sonatype()
-    }
-}
-
 val mavenCentralDeploy by tasks.registering(DefaultTask::class) {
     group = "publishing"
     val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
@@ -287,7 +280,4 @@ val mavenCentralDeploy by tasks.registering(DefaultTask::class) {
         .flatMap { it.tasks.withType<PublishToMavenRepository>() }
         .filter { it.repository.name == "sonatype" }
     dependsOn(publishTasks)
-    if (!isSnapshot) {
-        dependsOn(tasks.closeAndReleaseStagingRepositories)
-    }
 }
