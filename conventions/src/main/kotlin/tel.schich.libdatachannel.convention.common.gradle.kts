@@ -45,6 +45,14 @@ dependencies {
 }
 
 publishing {
+    repositories {
+        maven {
+            name = "mavenCentralSnapshots"
+            url = uri("https://central.sonatype.com/repository/maven-snapshots/")
+            credentials(PasswordCredentials::class)
+        }
+    }
+
     publications {
         register<MavenPublication>("maven") {
             artifactId = project.name

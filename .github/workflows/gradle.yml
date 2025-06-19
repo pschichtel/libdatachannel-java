@@ -32,5 +32,5 @@ jobs:
         fi
         ./gradlew --no-configuration-cache "${task[@]}"
       env:
-        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+        ORG_GRADLE_PROJECT_mavenCentralSnapshotsUsername: ${{ secrets.SONATYPE_USERNAME }}
+        ORG_GRADLE_PROJECT_mavenCentralSnapshotsPassword: ${{ secrets.SONATYPE_PASSWORD }}

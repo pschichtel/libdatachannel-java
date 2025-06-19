@@ -276,8 +276,12 @@ val mavenCentralDeploy by tasks.registering(DefaultTask::class) {
     group = "publishing"
     val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
 
-    val publishTasks = allprojects
-        .flatMap { it.tasks.withType<PublishToMavenRepository>() }
-        .filter { it.repository.name == "sonatype" }
-    dependsOn(publishTasks)
+    if (isSnapshot) {
+        val publishTasks = allprojects
+            .flatMap { it.tasks.withType<PublishToMavenRepository>() }
+            .filter { it.repository.name == "mavenCentralSnapshots" }
+        dependsOn(publishTasks)
+    } else {
+        TODO("Release publishing is not working yet")
+    }
 }
