@@ -1,3 +1,4 @@
+import io.github.zenhelix.gradle.plugin.task.PublishBundleMavenCentralTask
 import org.gradle.internal.declarativedsl.intrinsics.listOf
 import org.gradle.kotlin.dsl.support.serviceOf
 import tel.schich.dockcross.execute.DockerRunner
@@ -277,11 +278,17 @@ val mavenCentralDeploy by tasks.registering(DefaultTask::class) {
     val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
 
     if (isSnapshot) {
-        val publishTasks = allprojects
-            .flatMap { it.tasks.withType<PublishToMavenRepository>() }
-            .filter { it.repository.name == "mavenCentralSnapshots" }
-        dependsOn(publishTasks)
+        for (project in allprojects) {
+            val tasks = project.tasks
+                .withType<PublishToMavenRepository>()
+                .matching { it.name == "mavenCentralSnapshots" }
+            dependsOn(tasks)
+        }
     } else {
-        TODO("Release publishing is not working yet")
+        for (project in allprojects) {
+            val tasks = project.tasks
+                .withType<PublishBundleMavenCentralTask>()
+            dependsOn(tasks)
+        }
     }
 }

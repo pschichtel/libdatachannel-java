@@ -1,7 +1,10 @@
+import io.github.zenhelix.gradle.plugin.extension.PublishingType
+
 plugins {
     `java-library`
     signing
     `maven-publish`
+    id("io.github.zenhelix.maven-central-publish")
 }
 
 group = "tel.schich"
@@ -42,6 +45,14 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.13.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("ch.qos.logback:logback-classic:1.5.18")
+}
+
+mavenCentralPortal {
+    credentials {
+        username = project.provider { project.property("mavenCentralPortalUsername") as String }
+        password = project.provider { project.property("mavenCentralPortalPassword") as String }
+    }
+    publishingType = PublishingType.AUTOMATIC
 }
 
 publishing {
