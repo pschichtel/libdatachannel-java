@@ -333,7 +333,7 @@ val mavenCentralDeploy by tasks.registering(DefaultTask::class) {
         for (project in allprojects) {
             val tasks = project.tasks
                 .withType<PublishToMavenRepository>()
-                .matching { it.name == "mavenCentralSnapshots" }
+                .matching { it.repository.name == "mavenCentralSnapshots" }
             dependsOn(tasks)
         }
     } else {
