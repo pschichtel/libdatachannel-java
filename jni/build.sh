@@ -39,6 +39,7 @@ then
   )
 elif [ "$TARGET_FAMILY" = 'macos' ]
 then
+  cp -v "${MOUNT_SOURCE}/jni/conan-profiles/${TARGET_CLASSIFIER}.ini" "$profile_path"
   cmake_options+=(
     "-DOSXCROSS_HOST=${OSXCROSS_HOST}"
   )
