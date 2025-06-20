@@ -1,5 +1,10 @@
 from conan import ConanFile
 
+statically_linked_platforms = {
+    "Windows",
+    "Macos",
+}
+
 
 class LibDataChannel(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
@@ -7,4 +12,4 @@ class LibDataChannel(ConanFile):
     generators = "CMakeDeps"
 
     def configure(self):
-        self.options["openssl"].shared = self.settings.os != "Windows" and self.settings.os != "Macos"
+        self.options["openssl"].shared = self.settings.os not in statically_linked_platforms
