@@ -1,11 +1,11 @@
 #include "util.h"
-#include <jni-c-to-java.h>
-#include <stdlib.h>
 #include <errno.h>
-#include <string.h>
+#include <jni-c-to-java.h>
 #include <jni-java-to-c.h>
+#include <stdlib.h>
+#include <string.h>
 
-jstring get_dynamic_string(JNIEnv *env, const char* func_name, get_dynamic_string_func func, int handle) {
+jstring get_dynamic_string(JNIEnv* env, const char* func_name, get_dynamic_string_func func, int handle) {
     int size = wrap_error(env, "", func(handle, NULL, -1));
     char* memory = malloc(size);
     if (memory == NULL) {
@@ -43,7 +43,7 @@ jint wrap_error(JNIEnv* env, const char* message, int result) {
     }
 }
 
-void throw_native_exception(JNIEnv *env, char *msg) {
+void throw_native_exception(JNIEnv* env, char* msg) {
     // It is necessary to get the errno before any Java or JNI function is called, as it
     // may become changed due to the VM operations.
     int errorNumber = errno;
@@ -51,7 +51,7 @@ void throw_native_exception(JNIEnv *env, char *msg) {
     throw_tel_schich_libdatachannel_exception_NativeOperationException_cstr(env, msg, errorNumber, strerror(errorNumber));
 }
 
-JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannel_freeMemory(JNIEnv *env, jclass clazz, jlong address) {
-    void* ptr = (void*)(intptr_t)address;
+JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannel_freeMemory(JNIEnv* env, jclass clazz, jlong address) {
+    void* ptr = (void*) (intptr_t) address;
     free(ptr);
 }

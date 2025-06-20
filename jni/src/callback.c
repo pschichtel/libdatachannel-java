@@ -1,6 +1,6 @@
 #include "callback.h"
-#include "util.h"
 #include "global_jvm.h"
+#include "util.h"
 #include <stdlib.h>
 
 struct jvm_callback* allocate_callback(JNIEnv* env, jobject callback) {
