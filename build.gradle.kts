@@ -117,6 +117,8 @@ fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     group = nativeGroup
     dockcrossTag = "20250109-7bf589c"
 
+    inputs.file(project.layout.projectDirectory.file("jni/build.sh"))
+
     when {
         target.image == null -> {
             image = "dummy"
@@ -141,22 +143,18 @@ fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     dependsOn(tasks.compileJava)
 
     output = outputTo.dir("native")
-    val conanDir = "conan"
     extraEnv.putAll(target.env)
-    extraEnv.put("CONAN_HOME", SubstitutingString("\${OUTPUT_DIR}/$conanDir/home"))
-    // OpenSSL's makefile constructs broken compiler paths due to CROSS_COMPILE
-    extraEnv.put("CROSS_COMPILE", "")
+    extraEnv.put("JOBS", project.gradle.startParameter.maxWorkerCount.toString())
+    extraEnv.put("RELATIVE_PROJECT_PATH", output.get().asFile.toPath().relativize(jniPath.asFile.toPath()).toString())
+    extraEnv.put("PROJECT_VERSION", project.version.toString())
+    extraEnv.put("PROJECT_BUILD_TYPE", if (buildReleaseBinaries) "Release" else "Debug")
+    extraEnv.put("TARGET_FAMILY", target.family)
+    extraEnv.put("TARGET_CLASSIFIER", target.classifier)
+    target.image?.let {
+        extraEnv.put("TARGET_IMAGE", it)
+    }
 
-    val relativePathToProject = output.get().asFile.toPath().relativize(jniPath.asFile.toPath()).toString()
-    val projectVersionOption = "-DPROJECT_VERSION=${project.version}"
-    val releaseOption = "-DCMAKE_BUILD_TYPE=${if (buildReleaseBinaries) "Release" else "Debug"}"
-    val conanProviderOption = SubstitutingString("-DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=\${MOUNT_SOURCE}/jni/cmake-conan/conan_provider.cmake")
-    val policyVersionOption = "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
-    script = listOf(
-        listOf(SubstitutingString("\${MOUNT_SOURCE}/jni/setup-conan-profile.sh")),
-        listOf("cmake", relativePathToProject, policyVersionOption, conanProviderOption, projectVersionOption, releaseOption) + target.args,
-        listOf("make", "-j${project.gradle.startParameter.maxWorkerCount}"),
-    )
+    script = listOf(listOf(SubstitutingString("\${MOUNT_SOURCE}/jni/build.sh")))
 
     configureSshRemoteBuild(target)
 }
@@ -221,38 +219,40 @@ val targets = listOf(
         classifier = "windows-x86_32",
     ),
     BuildTarget(
-        image = "ghcr.io/pschichtel/osxcross/x86_64:20250615-0a476ef",
+        image = "ghcr.io/pschichtel/cross-build/osx:20250620-f1c8ddd",
         family = "macos",
         classifier = "macos-x86_64",
+        env = mapOf("OSXCROSS_HOST" to "aarch64-apple-darwin23.6"),
     ),
     BuildTarget(
-        image = "ghcr.io/pschichtel/osxcross/aarch64:20250615-0a476ef",
+        image = "ghcr.io/pschichtel/cross-build/osx:20250620-f1c8ddd",
         family = "macos",
         classifier = "macos-arm64",
+        env = mapOf("OSXCROSS_HOST" to "x86_64-apple-darwin23.6"),
     ),
     BuildTarget(
-        image = "android-arm",
+        image = "ghcr.io/pschichtel/cross-build/android:20250620-f1c8ddd",
         family = "android",
         classifier = "android-armeabi-v7a",
-        args = listOf("-DANDROID_ABI=armeabi-v7a", "-DANDROID_PLATFORM=android-21"),
+        env = mapOf("ANDROID_ABI" to "armeabi-v7a"),
     ),
     BuildTarget(
-        image = "android-arm64",
+        image = "ghcr.io/pschichtel/cross-build/android:20250620-f1c8ddd",
         family = "android",
         classifier = "android-arm64-v8a",
-        args = listOf("-DANDROID_ABI=arm64-v8a", "-DANDROID_PLATFORM=android-21"),
+        env = mapOf("ANDROID_ABI" to "arm64-v8a"),
     ),
     BuildTarget(
-        image = "android-x86",
+        image = "ghcr.io/pschichtel/cross-build/android:20250620-f1c8ddd",
         family = "android",
         classifier = "android-x86",
-        args = listOf("-DANDROID_ABI=x86", "-DANDROID_PLATFORM=android-21"),
+        env = mapOf("ANDROID_ABI" to "x86"),
     ),
     BuildTarget(
-        image = "android-x86_64",
+        image = "ghcr.io/pschichtel/cross-build/android:20250620-f1c8ddd",
         family = "android",
         classifier = "android-x86_64",
-        args = listOf("-DANDROID_ABI=x86_64", "-DANDROID_PLATFORM=android-21"),
+        env = mapOf("ANDROID_ABI" to "x86_64"),
     ),
 )
 
