@@ -28,7 +28,7 @@ jobs:
         task=(assemble)
         if [[ "$GITHUB_REF" =~ refs/tags/v* ]] || [ "$GITHUB_REF" = 'refs/heads/main' ]
         then
-          task=(mavenCentralDeploy "-PsonatypeUsername=$SONATYPE_USERNAME" "-PsonatypePassword=$SONATYPE_PASSWORD")
+          task=(mavenCentralDeploy)
         fi
         ./gradlew --no-configuration-cache "${task[@]}"
       env:
