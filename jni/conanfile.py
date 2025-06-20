@@ -12,4 +12,4 @@ class LibDataChannel(ConanFile):
     generators = "CMakeDeps"
 
     def configure(self):
-        self.options["openssl"].shared = self.settings.os not in statically_linked_platforms
+        self.options["openssl"].shared = f"{self.settings.os}" not in statically_linked_platforms
