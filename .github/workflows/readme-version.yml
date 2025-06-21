@@ -15,13 +15,15 @@ jobs:
         branch='main'
         git checkout "$branch" 
         git pull
-        if tag="$(git describe --abbrev=0 --tags --match="v*")"
+        if ! tag="$(git describe --abbrev=0 --tags --match='v*')"
         then
           exit 0
         fi
         tag="${tag#v}"
         sed -i -r "s/([:>])[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+([\"<])/\1$tag\2/g" README.md
         git add README.md
+        git config --global user.name "GitHub Workflow"
+        git config --global user.email "workflow@libdatachannel-java.github.io"
         if git commit -m 'Update versions in README.md'
         then
           git push origin "$branch"
