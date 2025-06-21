@@ -1,0 +1,28 @@
+name: Update Readme
+
+on:
+  push:
+    tags: [ 'v*.*.*.*' ]
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Update Readme
+      run: |
+        branch='main'
+        git checkout "$branch" 
+        git pull
+        if tag="$(git describe --abbrev=0 --tags --match="v*")"
+        then
+          exit 0
+        fi
+        tag="${tag#v}"
+        sed -i -r "s/([:>])[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+([\"<])/\1$tag\2/g" README.md
+        git add README.md
+        if git commit -m 'Update versions in README.md'
+        then
+          git push origin "$branch"
+        fi
