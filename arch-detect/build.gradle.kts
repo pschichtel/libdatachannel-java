@@ -10,7 +10,7 @@ dependencies {
     api(rootProject)
     nativeLibs(project(mapOf(
         "path" to rootProject.path,
-        "configuration" to "archDetectConfiguration",
+        "configuration" to Constants.ARCH_DETECT_CONFIG,
     )))
 }
 

@@ -66,7 +66,7 @@ val currentVersion by tasks.registering(DefaultTask::class) {
     }
 }
 
-val archDetectConfiguration by configurations.registering {
+val archDetectConfiguration = configurations.register(Constants.ARCH_DETECT_CONFIG) {
     isCanBeConsumed = true
 }
 
@@ -192,6 +192,20 @@ data class BuildTarget(
     val args: List<String> = emptyList(),
 )
 
+fun androidTarget(abi: String) = BuildTarget(
+    image = "ghcr.io/pschichtel/cross-build/android:20250620-f1c8ddd",
+    family = "android",
+    classifier = "${Constants.ANDROID_CLASSIFIER_PREFIX}$abi",
+    env = mapOf("ANDROID_ABI" to abi),
+)
+
+fun macosTarget(classifier: String, arch: String) = BuildTarget(
+    image = "ghcr.io/pschichtel/cross-build/osx:20250620-f1c8ddd",
+    family = "macos",
+    classifier = "${Constants.MACOS_CLASSIFIER_PREFIX}$classifier",
+    env = mapOf("OSXCROSS_HOST" to "$arch-apple-darwin23.6"),
+)
+
 val targets = listOf(
     BuildTarget(
         image = "linux-x64",
@@ -211,49 +225,19 @@ val targets = listOf(
     BuildTarget(
         image = "windows-static-x64",
         family = "windows",
-        classifier = "windows-x86_64",
+        classifier = "${Constants.WINDOWS_CLASSIFIER_PREFIX}x86_64",
     ),
     BuildTarget(
         image = "windows-static-x86",
         family = "windows",
-        classifier = "windows-x86_32",
+        classifier = "${Constants.WINDOWS_CLASSIFIER_PREFIX}x86_32",
     ),
-    BuildTarget(
-        image = "ghcr.io/pschichtel/cross-build/osx:20250620-f1c8ddd",
-        family = "macos",
-        classifier = "macos-x86_64",
-        env = mapOf("OSXCROSS_HOST" to "aarch64-apple-darwin23.6"),
-    ),
-    BuildTarget(
-        image = "ghcr.io/pschichtel/cross-build/osx:20250620-f1c8ddd",
-        family = "macos",
-        classifier = "macos-arm64",
-        env = mapOf("OSXCROSS_HOST" to "x86_64-apple-darwin23.6"),
-    ),
-    BuildTarget(
-        image = "ghcr.io/pschichtel/cross-build/android:20250620-f1c8ddd",
-        family = "android",
-        classifier = "android-armeabi-v7a",
-        env = mapOf("ANDROID_ABI" to "armeabi-v7a"),
-    ),
-    BuildTarget(
-        image = "ghcr.io/pschichtel/cross-build/android:20250620-f1c8ddd",
-        family = "android",
-        classifier = "android-arm64-v8a",
-        env = mapOf("ANDROID_ABI" to "arm64-v8a"),
-    ),
-    BuildTarget(
-        image = "ghcr.io/pschichtel/cross-build/android:20250620-f1c8ddd",
-        family = "android",
-        classifier = "android-x86",
-        env = mapOf("ANDROID_ABI" to "x86"),
-    ),
-    BuildTarget(
-        image = "ghcr.io/pschichtel/cross-build/android:20250620-f1c8ddd",
-        family = "android",
-        classifier = "android-x86_64",
-        env = mapOf("ANDROID_ABI" to "x86_64"),
-    ),
+    androidTarget(abi = "armeabi-v7a"),
+    androidTarget(abi = "arm64-v8a"),
+    androidTarget(abi = "x86"),
+    androidTarget(abi = "x86_64"),
+    macosTarget(classifier = "arm64", arch = "aarch64"),
+    macosTarget(classifier = "x86_64", arch = "x86_64"),
 )
 
 val packageNativeAll by tasks.registering(DefaultTask::class) {
