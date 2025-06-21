@@ -26,7 +26,7 @@ jobs:
     - name: Build
       run: |
         task=(assemble)
-        if [[ "$GITHUB_REF" =~ refs/tags/v* ]] || [ "$GITHUB_REF" = 'refs/heads/main' ]
+        if [ "$GITHUB_REF" = 'refs/heads/main' ]
         then
           task=(mavenCentralDeploy)
         fi
