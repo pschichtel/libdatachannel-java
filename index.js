@@ -22,9 +22,7 @@ function ipv6ToBase64(ipv6) {
 }
 
 async function acceptOffer() {
-    if (pc.signalingState !== "stable") {
-        return;
-    }
+    if (pc.signalingState != "stable") return;
     console.log("Accepting offer...", offer.value)
 
     await pc.setRemoteDescription({
@@ -190,11 +188,11 @@ function handleChange() {
 handleChange();
 
 
-const params = new URLSearchParams(window.location.search);
+var params = new URLSearchParams(window.location.search);
 let sdpValue = params.get("sdp");
 if (sdpValue) {
     sdpValue = atob(sdpValue)
     console.log(sdpValue)
     offer.value = sdpValue;
-    acceptOffer().then();
+    acceptOffer();
 }
