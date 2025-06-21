@@ -68,10 +68,6 @@ public class DataChannel implements Closeable {
     }
 
     private void sendMessage(ByteBuffer data, int offset, int length) {
-        if (length < 0 || offset < 0 || offset + length > data.capacity()) {
-            throw new IllegalArgumentException("Buffer access out of bounds");
-        }
-
         wrapError("sendMessage", rtcSendMessage(channelHandle, data, offset, length));
     }
 
