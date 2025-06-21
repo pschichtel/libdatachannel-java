@@ -1,6 +1,6 @@
 [versions]
 dockcrossPlugin = "0.4.2"
-jniAccessGenerator = "1.2.0"
+jniAccessGenerator = "1.2.2"
 
 [libraries]
 jniAccessGenerator = { module = "tel.schich:jni-access-generator", version.ref = "jniAccessGenerator" }
