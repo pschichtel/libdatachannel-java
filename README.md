@@ -7,7 +7,7 @@ Java wrappers for [libdatachannel](https://github.com/paullouisageneau/libdatach
 
 #### Gradle (build.gradle.kts)
 ```kotlin
-implementation("tel.schich:libdatachannel-java:0.22.6.1")
+implementation("tel.schich:libdatachannel-java:0.23.0.0")
 ```
 
 #### Maven (pom.xml)
@@ -15,7 +15,7 @@ implementation("tel.schich:libdatachannel-java:0.22.6.1")
 <dependency>
     <groupId>tel.schich</groupId>
     <artifactId>libdatachannel-java</artifactId>
-    <version>0.22.6.1</version>
+    <version>0.23.0.0</version>
 </dependency>
 ```
 
