@@ -19,8 +19,10 @@ implementation("tel.schich:libdatachannel-java:0.22.6.1")
 </dependency>
 ```
 
-Additionally, pull the architecture-specific native components. Alternatively, use the `libdatachannel-java-arch-detect`
-module, which includes common architectures and has code to detect which one to apply.
+Additionally, pull the architecture-specific native components using their the architecture-specific classifier.
+
+Alternatively, use the `libdatachannel-java-arch-detect` module, which includes common architectures and has
+code to detect which one to apply.
 
 ### Offerer example
 
@@ -48,6 +50,18 @@ try (var peer = RTCPeerConnection.createPeer(cfg)) {
     future.join();
 }
 ```
+
+## Android
+
+For Android apps an additional module exists: `libdatachannel-java-android`, which has an Android archive (.aar file) as
+its main artifact. This artifact contains the native components in the correct file layouts, such that the library works
+without any additional initialization code. The `arch-detect` module will not work on Android without changes!
+
+### Permissions
+
+To use libdatachannel on Android, the following permissions are required:
+
+* `android.permission.INTERNET`
 
 ## Examples
 
