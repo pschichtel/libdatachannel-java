@@ -34,7 +34,7 @@ then
   cmake_options+=(
     "-DANDROID_ABI=${ANDROID_ABI}"
     "-DANDROID_PLATFORM=android-21"
-    "-DANDROID_STL=c++_shared"
+    "-DANDROID_STL=c++_static"
     "-DANDROID_NDK=${ANDROID_NDK_ROOT}"
   )
 elif [ "$TARGET_FAMILY" = 'macos' ]

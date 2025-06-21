@@ -10,5 +10,7 @@ plugins {
 
 include("arch-detect")
 project(":arch-detect").name = "libdatachannel-java-arch-detect"
+include("android")
+project(":android").name = "libdatachannel-java-android"
 
 includeBuild("example/java")
