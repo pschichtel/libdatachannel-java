@@ -10,6 +10,7 @@ import tel.schich.libdatachannel.LibDataChannelArchDetect;
 import tel.schich.libdatachannel.PeerConnection;
 import tel.schich.libdatachannel.PeerConnectionConfiguration;
 import tel.schich.libdatachannel.PeerState;
+import tel.schich.libdatachannel.SessionDescriptionType;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -52,24 +53,29 @@ public class Main {
     }
 
     public static class Offer implements AutoCloseable {
-        private DataChannel channel;
+        private CompletableFuture<DataChannel> channel;
         private String sdp;
 
-        public Offer(DataChannel channel, String sdp) {
+        public Offer(CompletableFuture<DataChannel> channel, String sdp) {
             this.channel = channel;
             this.sdp = sdp;
         }
 
+        public DataChannel getChannel() {
+            return channel.join();
+        }
+
         public void answer(String remoteSdp) {
-            channel.peer().setAnswer(remoteSdp);
+            getChannel().peer().setAnswer(remoteSdp);
         }
 
         public CompletableFuture<Void> closeFuture() {
             CompletableFuture<Void> future = new CompletableFuture<>();
-            this.channel.onClosed.register(c -> {
+            var channel = getChannel();
+            channel.onClosed.register(c -> {
                 future.completeAsync(() -> null);
             });
-            this.channel.peer().onStateChange.register((peer, state) -> {
+            channel.peer().onStateChange.register((peer, state) -> {
                 if (state == PeerState.RTC_CLOSED) {
                     peer.close();
                     future.completeAsync(() -> null);
@@ -80,7 +86,7 @@ public class Main {
 
         @Override
         public void close() {
-            this.channel.peer().close();
+            getChannel().peer().close();
         }
 
         public static CompletableFuture<Offer> create(String label, PeerConnectionConfiguration cfg) {
@@ -93,7 +99,24 @@ public class Main {
                 }
             });
             final var channel = peer.createDataChannel(label);
-            return futureOffer.thenApply(sdp -> new Offer(channel, sdp));
+            return futureOffer.thenApply(sdp -> new Offer(CompletableFuture.completedFuture(channel), sdp));
+        }
+
+        public static CompletableFuture<Offer> from(String existingOffer, String label, PeerConnectionConfiguration cfg) {
+            var peer = PeerConnection.createPeer(cfg);
+            final var sdpFuture = new CompletableFuture<String>();
+            peer.onGatheringStateChange.register((pc, state) -> {
+                System.out.println("State Change: " + state);
+                if (state == RTC_GATHERING_COMPLETE) {
+                    sdpFuture.complete(peer.localDescription());
+                }
+            });
+            peer.setRemoteDescription(existingOffer, SessionDescriptionType.OFFER);
+            CompletableFuture<DataChannel> channelFuture = new CompletableFuture<>();
+            peer.onDataChannel.register((peer1, receivedChannel) -> {
+                channelFuture.complete(receivedChannel);
+            });
+            return sdpFuture.thenApply(sdp -> new Offer(channelFuture, sdp));
         }
 
         @Override
@@ -122,30 +145,44 @@ public class Main {
     }
 
     public static void main(String[] args) {
+        boolean answerMode = args.length == 1 && args[0].equals("answer");
         LibDataChannelArchDetect.initialize();
         final var cfg = PeerConnectionConfiguration.DEFAULT.withIceServers(uris("stun:stun.l.google.com:19302"));
         while (true) {
-            try (var offer = Offer.create("test", cfg).join()) {
-                offer.channel.onOpen.register(Main::handleOpen);
-                offer.channel.onMessage.register(handleText(Main::handleTextMessage));
-                offer.channel.onMessage.register(handleBinary(Main::handleByteBuffer));
-                offer.channel.onError.register(Main::handleError);
-                offer.channel.peer().onStateChange.register(Main::handleStateChange);
-                final var encoded = Base64.getEncoder().encodeToString(offer.sdp.getBytes());
+            final Offer offer;
+            if (answerMode) {
+                System.out.println("Awaiting Offer...\n");
+                var sdp = readCompressedSdp();
+                offer = Offer.from(sdp, "test", cfg).join();
+            } else {
+                offer = Offer.create("test", cfg).join();
+            }
+            try (offer) {
                 System.out.println("SDP:\n\n" + offer.sdp);
-                System.out.println("Awaiting Answer...\n" + WEB_EXAMPLE_URL + "?sdp=" + encoded);
 
-                String remoteSdp = Main.readCompressedSdp();
-                while (remoteSdp == null) {
-                    System.out.println("Invalid! Try again");
-                    remoteSdp = Main.readCompressedSdp();
+                var channel = offer.getChannel();
+                channel.onOpen.register(Main::handleOpen);
+                channel.onMessage.register(handleText(Main::handleTextMessage));
+                channel.onMessage.register(handleBinary(Main::handleByteBuffer));
+                channel.onError.register(Main::handleError);
+                channel.peer().onStateChange.register(Main::handleStateChange);
+
+                if (!answerMode) {
+                    final var encoded = Base64.getEncoder().encodeToString(offer.sdp.getBytes());
+                    System.out.println("SDP:\n\n" + offer.sdp);
+                    System.out.println("Awaiting Answer...\n" + WEB_EXAMPLE_URL + "?sdp=" + encoded);
+
+                    String remoteSdp = readCompressedSdp();
+                    while (remoteSdp == null) {
+                        System.out.println("Invalid! Try again");
+                        remoteSdp = readCompressedSdp();
+                    }
+                    System.out.println("Processing Answer...");
+                    System.out.println("\n\n");
+                    System.out.println(remoteSdp);
+                    System.out.println("\n\n");
+                    offer.answer(remoteSdp);
                 }
-                System.out.println("Processing Answer...");
-                System.out.println("\n\n");
-                System.out.println(remoteSdp);
-                System.out.println("\n\n");
-                offer.answer(remoteSdp);
-
 
                 offer.closeFuture().join();
             }
