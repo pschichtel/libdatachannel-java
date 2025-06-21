@@ -15,9 +15,16 @@ jobs:
         branch='main'
         git checkout "$branch" 
         git pull
-        if ! tag="$(git describe --abbrev=0 --tags --match='v*')"
+        tag="$(git rev-list --tags='v*.*.*.*' --max-count=1)"
+        if [ -z "$tag" ]
         then
-          exit 0
+          echo "No version tag found!" >&2
+          exit 1
+        fi
+        if ! tag="$(git describe --tags "$tag")"
+        then
+          echo "Tagged commit could not be described!" >&2
+          exit 1
         fi
         tag="${tag#v}"
         sed -i -r "s/([:>])[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+([\"<])/\1$tag\2/g" README.md
