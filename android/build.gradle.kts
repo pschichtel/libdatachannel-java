@@ -10,7 +10,7 @@ dependencies {
     api(rootProject)
     nativeLibs(project(mapOf(
         "path" to rootProject.path,
-        "configuration" to Constants.ARCH_DETECT_CONFIG,
+        "configuration" to Constants.ANDROID_CONFIG,
     )))
 }
 
@@ -19,9 +19,6 @@ tasks.jar.configure {
     this.archiveExtension = "aar"
     for (jar in nativeLibs.get().resolvedConfiguration.resolvedArtifacts) {
         val classifier = jar.classifier ?: continue
-        if (!classifier.startsWith(Constants.ANDROID_CLASSIFIER_PREFIX)) {
-            continue
-        }
         val abi = classifier.removePrefix(Constants.ANDROID_CLASSIFIER_PREFIX)
         from(zipTree(jar.file)) {
             include("native/*.so")

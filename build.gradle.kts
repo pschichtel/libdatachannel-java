@@ -70,6 +70,10 @@ val archDetectConfiguration = configurations.register(Constants.ARCH_DETECT_CONF
     isCanBeConsumed = true
 }
 
+val androidConfiguration = configurations.register(Constants.ANDROID_CONFIG) {
+    isCanBeConsumed = true
+}
+
 val jniPath = project.layout.projectDirectory.dir("jni")
 tasks.withType<JavaCompile>().configureEach {
     val annotationProcessorArgs = listOf(
@@ -190,6 +194,7 @@ data class BuildTarget(
     val classifier: String,
     val env: Map<String, String> = emptyMap(),
     val args: List<String> = emptyList(),
+    val outputTo: NamedDomainObjectProvider<Configuration> = archDetectConfiguration,
 )
 
 fun androidTarget(abi: String) = BuildTarget(
@@ -197,6 +202,7 @@ fun androidTarget(abi: String) = BuildTarget(
     family = "android",
     classifier = "${Constants.ANDROID_CLASSIFIER_PREFIX}$abi",
     env = mapOf("ANDROID_ABI" to abi),
+    outputTo = androidConfiguration,
 )
 
 fun macosTarget(classifier: String, arch: String) = BuildTarget(
@@ -293,7 +299,7 @@ for (target in targets) {
         dependsOn(packageNative)
     }
 
-    artifacts.add(archDetectConfiguration.name, packageNative)
+    artifacts.add(target.outputTo.name, packageNative)
 }
 
 dependencies {
