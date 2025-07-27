@@ -49,9 +49,6 @@ jobs:
       - name: Build native library for host
         run: ./gradlew compileNativeForHost
 
-      - name: Package native library
-        run: ./gradlew packageNativeForHost
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
