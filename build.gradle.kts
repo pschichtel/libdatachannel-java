@@ -8,6 +8,7 @@ import tel.schich.dockcross.execute.SubstitutingString
 import tel.schich.dockcross.tasks.DockcrossRunTask
 import java.net.URI
 import java.nio.file.Files
+import java.nio.file.Paths
 
 plugins {
     id("tel.schich.libdatachannel.convention.common")
@@ -255,40 +256,66 @@ for (target in targets) {
     val outputDir: Directory = dockcrossOutputDir.dir(target.classifier)
     val taskSuffix = target.classifier.split("[_-]".toRegex())
         .joinToString(separator = "") { it.lowercase().replaceFirstChar(Char::uppercaseChar) }
-    val compileNative = tasks.register("compileNativeFor$taskSuffix", DockcrossRunTask::class) {
-        baseConfigure(outputDir, target)
-        unsafeWritableMountSource = true
-        containerName = "dockcross-${project.name}-${target.classifier}"
-    }
+    val prebuiltPath = project.findProperty("libdatachannel.${target.classifier}.prebuilt-path")
+        ?.toString()
+        ?.ifBlank { null }
+        ?.let { Paths.get(it).toFile() }
 
-    if (ci) {
-        val previous = previousCompileNative
-        compileNative {
-            if (target.image == null) {
-                runner(NonContainerRunner)
-            } else {
-                runner(DockerRunner())
-            }
-            if (previous != null) {
-                mustRunAfter(previous)
-            }
+    val packageTaskName = "packageNativeFor$taskSuffix"
+    val packageNative = if (prebuiltPath == null) {
+        val compileNative = tasks.register("compileNativeFor$taskSuffix", DockcrossRunTask::class) {
+            baseConfigure(outputDir, target)
+            unsafeWritableMountSource = true
+            containerName = "dockcross-${project.name}-${target.classifier}"
+        }
 
-            if (target.image != null) {
-                val execOps = project.serviceOf<ExecOperations>()
-                doLast {
-                    execOps.exec {
-                        commandLine("docker", "image", "prune", "-af")
+
+        if (ci) {
+            val previous = previousCompileNative
+            compileNative {
+                if (target.image == null) {
+                    runner(NonContainerRunner)
+                } else {
+                    runner(DockerRunner())
+                }
+                if (previous != null) {
+                    mustRunAfter(previous)
+                }
+
+                if (target.image != null) {
+                    val execOps = project.serviceOf<ExecOperations>()
+                    doLast {
+                        execOps.exec {
+                            commandLine("docker", "image", "prune", "-af")
+                        }
                     }
                 }
             }
+
+            previousCompileNative = compileNative
         }
 
-        previousCompileNative = compileNative
-    }
-
-    val packageNative = tasks.register("packageNativeFor$taskSuffix", Jar::class) {
-        baseConfigure(compileNative, outputDir)
-        archiveClassifier = target.classifier
+        tasks.register(packageTaskName, Jar::class) {
+            baseConfigure(compileNative, outputDir)
+            archiveClassifier = target.classifier
+        }
+    } else {
+        tasks.register(packageTaskName, Jar::class) {
+            group = nativeGroup
+            from(prebuiltPath.parentFile) {
+                include(prebuiltPath.name)
+                includeEmptyDirs = false
+                eachFile {
+                    val fileName = when (target.family) {
+                        "macos" -> "libdatachannel-java.dylib"
+                        "windows" -> "libdatachannel-java.dll"
+                        else -> "libdatachannel-java.so"
+                    }
+                    relativePath = RelativePath.parse(true, "native/$fileName")
+                }
+            }
+            archiveClassifier = target.classifier
+        }
     }
 
     publishing.publications.withType<MavenPublication>().configureEach {
