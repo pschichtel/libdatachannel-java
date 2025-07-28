@@ -99,9 +99,14 @@ publishing {
     }
 }
 
-if (!ci) {
+val signingKey = System.getenv("SIGNING_KEY")?.ifBlank { null }
+if (!ci || signingKey != null) {
     signing {
-        useGpgCmd()
+        if (signingKey != null) {
+            useInMemoryPgpKeys(signingKey, null)
+        } else {
+            useGpgCmd()
+        }
         sign(publishing.publications)
     }
 }
