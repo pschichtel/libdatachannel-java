@@ -81,7 +81,7 @@ class Platform {
             return "android-";
         }
         if (getOS() == OS.MACOS) {
-            return "darwin-";
+            return "macos-";
         }
         return "";
     }
