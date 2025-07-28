@@ -90,12 +90,10 @@ jobs:
 
     - name: Build
       run: |
-        find artifacts
-        exit 1
         task=(assemble)
         prebuilts=(
-          -Plibdatachannel.macos-arm64.prebuilt-path=artifacts/macos-arm64/build/dockcross/host/native/libdatachannel-java.dylib
-          -Plibdatachannel.macos-x86_64.prebuilt-path=artifacts/macos-x86_64/build/dockcross/host/native/libdatachannel-java.dylib
+          -Plibdatachannel.macos-arm64.prebuilt-path=artifacts/macos-arm64/libdatachannel-java.dylib
+          -Plibdatachannel.macos-x86_64.prebuilt-path=artifacts/macos-x86_64/libdatachannel-java.dylib
         )
         if [ "$GITHUB_REF" = 'refs/heads/main' ]
         then
