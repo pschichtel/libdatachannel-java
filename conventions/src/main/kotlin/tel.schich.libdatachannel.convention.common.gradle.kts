@@ -47,10 +47,27 @@ dependencies {
     testImplementation("ch.qos.logback:logback-classic:1.5.18")
 }
 
+private fun Project.getSecret(name: String): Provider<String> = provider {
+    val env = System.getenv(name)
+        ?.ifBlank { null }
+    if (env != null) {
+        return@provider env
+    }
+
+    val propName = name.split("_")
+        .map { it.lowercase() }
+        .joinToString(separator = "") { word ->
+            word.replaceFirstChar { it.uppercase() }
+        }
+        .replaceFirstChar { it.lowercase() }
+
+    property(propName) as String
+}
+
 mavenCentralPortal {
     credentials {
-        username = project.provider { project.property("mavenCentralPortalUsername") as String }
-        password = project.provider { project.property("mavenCentralPortalPassword") as String }
+        username = project.getSecret("MAVEN_CENTRAL_PORTAL_USERNAME")
+        password = project.getSecret("MAVEN_CENTRAL_PORTAL_PASSWORD")
     }
     publishingType = PublishingType.AUTOMATIC
 }

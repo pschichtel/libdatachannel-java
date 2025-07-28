@@ -112,3 +112,5 @@ jobs:
         SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
         ORG_GRADLE_PROJECT_mavenCentralSnapshotsUsername: ${{ secrets.SONATYPE_USERNAME }}
         ORG_GRADLE_PROJECT_mavenCentralSnapshotsPassword: ${{ secrets.SONATYPE_PASSWORD }}
+        MAVEN_CENTRAL_PORTAL_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+        MAVEN_CENTRAL_PORTAL_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
