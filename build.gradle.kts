@@ -315,6 +315,12 @@ for (target in targets) {
                 }
             }
             archiveClassifier = target.classifier
+
+            doFirst {
+                if (!prebuiltPath.exists()) {
+                    throw GradleException("Prebuilt binary for $target does not exist: $prebuiltPath")
+                }
+            }
         }
     }
 

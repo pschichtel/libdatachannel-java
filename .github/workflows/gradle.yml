@@ -91,14 +91,15 @@ jobs:
     - name: Build
       run: |
         task=(assemble)
-        if [ "$GITHUB_REF" = 'refs/heads/main' ]
-        then
-          task=(mavenCentralDeploy)
-        fi
         prebuilts=(
           -Plibdatachannel.macos-arm64.prebuilt-path=artifacts/macos-arm64/build/dockcross/host/native/libdatachannel-java.dylib
           -Plibdatachannel.macos-x86_64.prebuilt-path=artifacts/macos-x86_64/build/dockcross/host/native/libdatachannel-java.dylib
         )
+        ./gradlew --no-configuration-cache tasks "${prebuilds[@]}"
+        if [ "$GITHUB_REF" = 'refs/heads/main' ]
+        then
+          task=(mavenCentralDeploy)
+        fi
         ./gradlew --no-configuration-cache "${task[@]}" "${prebuilds[@]}"
       env:
         ORG_GRADLE_PROJECT_mavenCentralSnapshotsUsername: ${{ secrets.SONATYPE_USERNAME }}
