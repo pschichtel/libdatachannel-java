@@ -88,6 +88,10 @@ jobs:
         name: libdatachannel-macos-x86_64
         path: artifacts/macos-x86_64/
 
+    - name: Dump Version
+      run: |
+        ./gradlew --no-configuration-cache :currentVersion
+
     - name: Build
       run: |
         task=(assemble)
