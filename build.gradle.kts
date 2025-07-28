@@ -159,7 +159,7 @@ fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
         extraEnv.put("TARGET_IMAGE", it)
     }
 
-    script = listOf(listOf(SubstitutingString("\${MOUNT_SOURCE}/jni/build.sh")))
+    script = listOf(listOf("bash", "../../../../jni/build.sh"))
 
     configureSshRemoteBuild(target)
 }
