@@ -4,7 +4,6 @@ import org.gradle.kotlin.dsl.support.serviceOf
 import tel.schich.dockcross.execute.DockerRunner
 import tel.schich.dockcross.execute.NonContainerRunner
 import tel.schich.dockcross.execute.RemoteSshRunner
-import tel.schich.dockcross.execute.SubstitutingString
 import tel.schich.dockcross.tasks.DockcrossRunTask
 import java.net.URI
 import java.nio.file.Files
