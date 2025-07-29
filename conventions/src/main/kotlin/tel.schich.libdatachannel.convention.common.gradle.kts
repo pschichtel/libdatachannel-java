@@ -134,6 +134,10 @@ when {
     }
     else -> {
         logger.lifecycle("Not signing artifacts!")
+        logger.lifecycle("ENV:")
+        for (envName in System.getenv().keys) {
+            logger.lifecycle("  - $envName")
+        }
     }
 }
 
