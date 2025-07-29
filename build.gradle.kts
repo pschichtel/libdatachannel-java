@@ -352,6 +352,7 @@ val mavenCentralDeploy by tasks.registering(DefaultTask::class) {
     val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
 
     if (isSnapshot) {
+        logger.lifecycle("Snapshot deployment!")
         for (project in allprojects) {
             val tasks = project.tasks
                 .withType<PublishToMavenRepository>()
@@ -359,10 +360,25 @@ val mavenCentralDeploy by tasks.registering(DefaultTask::class) {
             dependsOn(tasks)
         }
     } else {
+        logger.lifecycle("Release deployment!")
         for (project in allprojects) {
             val tasks = project.tasks
                 .withType<PublishBundleMavenCentralTask>()
             dependsOn(tasks)
         }
+    }
+}
+
+val githubActions by tasks.registering(DefaultTask::class) {
+    group = "publishing"
+    val deployRefPattern = """^refs/(?:tags/v\d+.\d+.\d+.\d+|heads/main)$""".toRegex()
+    val ref = System.getenv("GITHUB_REF")?.ifBlank { null }?.trim()
+
+    if (ref != null && deployRefPattern.matches(ref)) {
+        logger.lifecycle("Job in $ref will deploy!")
+        dependsOn(mavenCentralDeploy)
+    } else {
+        logger.lifecycle("Job will only build!")
+        dependsOn(tasks.assemble)
     }
 }

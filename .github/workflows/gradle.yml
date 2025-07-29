@@ -98,16 +98,11 @@ jobs:
 
     - name: Build
       run: |
-        task=(assemble)
         prebuilts=(
           -Plibdatachannel.macos-arm64.prebuilt-path=artifacts/macos-arm64/libdatachannel-java.dylib
           -Plibdatachannel.macos-x86_64.prebuilt-path=artifacts/macos-x86_64/libdatachannel-java.dylib
         )
-        if [ "$GITHUB_REF" = 'refs/heads/main' ]
-        then
-          task=(mavenCentralDeploy)
-        fi
-        ./gradlew --no-configuration-cache "${task[@]}" "${prebuilts[@]}"
+        ./gradlew --no-configuration-cache :githubActions "${prebuilts[@]}"
       env:
         SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
         ORG_GRADLE_PROJECT_mavenCentralSnapshotsUsername: ${{ secrets.SONATYPE_USERNAME }}
