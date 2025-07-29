@@ -116,15 +116,24 @@ publishing {
     }
 }
 
-val signingKey = System.getenv("SIGNING_KEY")?.ifBlank { null }
-if (!ci || signingKey != null) {
-    signing {
-        if (signingKey != null) {
+private val signingKey = System.getenv("SIGNING_KEY")?.ifBlank { null }?.trim()
+when {
+    signingKey != null -> {
+        logger.lifecycle("Received a signing key, using in-memory pgp keys!")
+        signing {
             useInMemoryPgpKeys(signingKey, null)
-        } else {
-            useGpgCmd()
+            sign(publishing.publications)
         }
-        sign(publishing.publications)
+    }
+    !ci -> {
+        logger.lifecycle("Not running in CI, using the gpg command!")
+        signing {
+            useGpgCmd()
+            sign(publishing.publications)
+        }
+    }
+    else -> {
+        logger.lifecycle("Not signing artifacts!")
     }
 }
 
