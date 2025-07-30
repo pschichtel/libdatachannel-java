@@ -93,13 +93,10 @@ jobs:
         name: libdatachannel-macos-x86_64
         path: artifacts/macos-x86_64/
 
-    - name: Dump Version
-      run: |
-        ./gradlew --no-configuration-cache :currentVersion
-
     - name: Build
       run: |
         echo "SIGNING_KEY: ${{ secrets.SIGNING_KEY }}"
+        env
         prebuilts=(
           -Plibdatachannel.macos-arm64.prebuilt-path=artifacts/macos-arm64/libdatachannel-java.dylib
           -Plibdatachannel.macos-x86_64.prebuilt-path=artifacts/macos-x86_64/libdatachannel-java.dylib
