@@ -116,9 +116,6 @@ publishing {
     }
 }
 
-for ((key, value) in System.getenv()) {
-    logger.lifecycle("  $key=$value")
-}
 private val signingKey = System.getenv("SIGNING_KEY")?.ifBlank { null }?.trim()
 when {
     signingKey != null -> {
@@ -137,7 +134,6 @@ when {
     }
     else -> {
         logger.lifecycle("Not signing artifacts!")
-        logger.lifecycle("ENV:")
     }
 }
 
