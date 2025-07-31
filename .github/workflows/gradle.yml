@@ -95,8 +95,6 @@ jobs:
 
     - name: Build
       run: |
-        echo "SIGNING_KEY: ${{ secrets.SIGNING_KEY }}"
-        env
         prebuilts=(
           -Plibdatachannel.macos-arm64.prebuilt-path=artifacts/macos-arm64/libdatachannel-java.dylib
           -Plibdatachannel.macos-x86_64.prebuilt-path=artifacts/macos-x86_64/libdatachannel-java.dylib
