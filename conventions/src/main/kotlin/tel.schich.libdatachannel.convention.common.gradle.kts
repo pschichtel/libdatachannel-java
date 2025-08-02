@@ -117,11 +117,13 @@ publishing {
 }
 
 private val signingKey = System.getenv("SIGNING_KEY")?.ifBlank { null }?.trim()
+private val signingKeyPassword = System.getenv("SIGNING_KEY_PASSWORD")?.ifBlank { null }?.trim() ?: ""
+
 when {
     signingKey != null -> {
         logger.lifecycle("Received a signing key, using in-memory pgp keys!")
         signing {
-            useInMemoryPgpKeys(signingKey, null)
+            useInMemoryPgpKeys(signingKey, signingKeyPassword)
             sign(publishing.publications)
         }
     }
@@ -136,4 +138,3 @@ when {
         logger.lifecycle("Not signing artifacts!")
     }
 }
-
