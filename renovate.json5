@@ -1,21 +1,21 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
   "git-submodules": {
     "enabled": true,
   },
-  "conan": {
+  conan: {
     "enabled": true,
   },
-  "customManagers": [
+  customManagers: [
     {
-      "fileMatch": ["^build\\.gradle\\.kts$"],
-      "matchStrings": [
-        "dockcrossTag\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      fileMatch: ["^build\\.gradle\\.kts$"],
+      matchStrings: [
+        "dockcrossTag\\s*=\\s*\"(?<currentValue>[^\"]+)\"",
       ],
       // this is hardcoded to linux-x64, but the tag would normally be aligned anyway
-      "depNameTemplate": "docker.io/dockcross/linux-x64",
-      "datasourceTemplate": "docker",
-      "versioningTemplate": "loose"
-    }
+      depNameTemplate: "docker.io/dockcross/linux-x64",
+      datasourceTemplate: "docker",
+      versioningTemplate: "loose",
+    },
   ],
 }

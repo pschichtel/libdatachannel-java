@@ -1,5 +1,4 @@
 import io.github.zenhelix.gradle.plugin.task.PublishBundleMavenCentralTask
-import org.gradle.internal.declarativedsl.intrinsics.listOf
 import org.gradle.kotlin.dsl.support.serviceOf
 import tel.schich.dockcross.execute.DockerRunner
 import tel.schich.dockcross.execute.NonContainerRunner

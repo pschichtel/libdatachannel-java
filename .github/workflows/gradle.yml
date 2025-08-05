@@ -63,7 +63,7 @@ jobs:
   build:
     needs: build-macos
     runs-on: ubuntu-latest
-    environment: sonatype-central
+    environment: ${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') ) && 'sonatype-central' || null }}
     steps:
     - uses: actions/checkout@v4
       with:
