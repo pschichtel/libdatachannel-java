@@ -7,5 +7,8 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.zenhelix.maven-central-publish:io.github.zenhelix.maven-central-publish.gradle.plugin:0.8.0")
+    implementation(plugin(libs.plugins.mavenCentralPublish))
 }
+
+fun plugin(plugin: Provider<PluginDependency>) =
+    plugin.map { "${it.pluginId}:${it.pluginId}.gradle.plugin:${it.version}" }
