@@ -37,6 +37,7 @@ jobs:
     - name: Install dependencies
       run: |
         brew update
+        brew upgrade
         brew install cmake conan
         conan --version
 
