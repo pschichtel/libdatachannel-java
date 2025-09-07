@@ -37,7 +37,8 @@ jobs:
     - name: Install dependencies
       run: |
         brew update
-        brew install conan
+        brew uninstall cmake
+        brew install cmake conan
         conan --version
 
     - name: Setup Gradle
