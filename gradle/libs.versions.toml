@@ -2,7 +2,7 @@
 dockcrossPlugin = "0.4.2"
 jniAccessGenerator = "1.2.2"
 mavenCentralPublish = "0.8.0"
-jdtAnnotations = "2.3.100"
+jdtAnnotations = "2.4.0"
 slf4j = "2.0.17"
 logback = "1.5.18"
 junitJupiter = "5.13.4"
