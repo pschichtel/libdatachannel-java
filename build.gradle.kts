@@ -118,7 +118,7 @@ fun DockcrossRunTask.configureSshRemoteBuild(target: BuildTarget) {
 
 fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     group = nativeGroup
-    dockcrossTag = "20250109-7bf589c"
+    dockcrossTag = "20250911-c5d3885"
 
     inputs.file(project.layout.projectDirectory.file("jni/build.sh"))
 
