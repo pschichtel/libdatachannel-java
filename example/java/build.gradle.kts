@@ -16,6 +16,12 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(11)
     }
+
+    testing {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(25)
+        }
+    }
 }
 
 application {
