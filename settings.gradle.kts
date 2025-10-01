@@ -1,10 +1,10 @@
 rootProject.name = "libdatachannel-java"
 
-includeBuild("conventions")
-
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
+
+includeBuild("conventions")
 
 include("arch-detect")
 project(":arch-detect").name = "libdatachannel-java-arch-detect"
