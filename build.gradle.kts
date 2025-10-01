@@ -74,7 +74,7 @@ val androidConfiguration = configurations.register(Constants.ANDROID_CONFIG) {
 }
 
 val jniPath = project.layout.projectDirectory.dir("jni")
-tasks.withType<JavaCompile>().configureEach {
+tasks.compileJava.configure {
     val annotationProcessorArgs = listOf(
         "generate.jni.headers" to "true",
         "generate.cache.mode.default" to "EAGER_PERSISTENT",
