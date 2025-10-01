@@ -1,6 +1,6 @@
 plugins {
     application
-    id("com.gradleup.shadow") version "9.0.2"
+    id("com.gradleup.shadow") version "9.2.2"
 }
 
 repositories {
@@ -9,7 +9,7 @@ repositories {
 
 dependencies {
     implementation("tel.schich:libdatachannel-java-arch-detect")
-    implementation("ch.qos.logback:logback-classic:1.5.18")
+    implementation("ch.qos.logback:logback-classic:1.5.19")
 }
 
 java {
