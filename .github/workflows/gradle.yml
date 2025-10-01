@@ -14,9 +14,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-14  # Apple Silicon runner
+          - os: macos-26  # Apple Silicon runner
             classifier: macos-arm64
-          - os: macos-13  # Intel runner
+          - os: macos-15-intel  # Intel runner
             classifier: macos-x86_64
     runs-on: ${{ matrix.os }}
     steps:
