@@ -6,12 +6,14 @@ import tel.schich.jniaccess.JNIAccess;
 
 import java.lang.ref.Cleaner;
 
-public class LibDataChannel {
+public abstract class LibDataChannel {
     static final Cleaner CLEANER = Cleaner.create();
     private static final Logger LOGGER = LoggerFactory.getLogger(LibDataChannel.class);
     private static volatile boolean initialized = false;
 
     public static final String LIB_NAME = "datachannel-java";
+
+    private LibDataChannel() {}
 
     /**
      * Initializes the library by loading the native library.
