@@ -16,7 +16,7 @@ java {
     withJavadocJar()
 
     toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -25,6 +25,8 @@ tasks.test {
 }
 
 tasks.withType<JavaCompile>().configureEach {
+    sourceCompatibility = "11"
+    targetCompatibility = "11"
     options.compilerArgs.addAll(
         listOf(
             "-Xlint:deprecation",
