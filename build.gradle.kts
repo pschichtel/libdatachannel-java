@@ -13,6 +13,10 @@ plugins {
     alias(libs.plugins.dockcross)
 }
 
+tasks.wrapper {
+    distributionType = Wrapper.DistributionType.ALL
+}
+
 fun extractLibDataChannelVersion(): String {
     val regex = """#define\s+RTC_VERSION\s+"([^"]+)"""".toRegex()
     val headerPath = project.layout.projectDirectory
