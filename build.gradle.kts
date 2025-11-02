@@ -221,11 +221,11 @@ val targets = listOf(
         family = "linux",
         classifier = "x86_64",
     ),
-    BuildTarget(
-        image = "linux-x86",
-        family = "linux",
-        classifier = "x86_32",
-    ),
+//    BuildTarget(
+//        image = "linux-x86",
+//        family = "linux",
+//        classifier = "x86_32",
+//    ),
     BuildTarget(
         image = "linux-arm64",
         family = "linux",
