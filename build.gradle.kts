@@ -236,11 +236,11 @@ val targets = listOf(
         family = "windows",
         classifier = "${Constants.WINDOWS_CLASSIFIER_PREFIX}x86_64",
     ),
-    BuildTarget(
-        image = "windows-static-x86",
-        family = "windows",
-        classifier = "${Constants.WINDOWS_CLASSIFIER_PREFIX}x86_32",
-    ),
+//    BuildTarget(
+//        image = "windows-static-x86",
+//        family = "windows",
+//        classifier = "${Constants.WINDOWS_CLASSIFIER_PREFIX}x86_32",
+//    ),
     androidTarget(abi = "armeabi-v7a"),
     androidTarget(abi = "arm64-v8a"),
     androidTarget(abi = "x86"),
