@@ -10,11 +10,11 @@ jobs:
   publish-web:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4.7.3
+        uses: JamesIves/github-pages-deploy-action@v4.7.6
         with:
           branch: gh-pages # The branch the action should deploy to.
           folder: example/web
