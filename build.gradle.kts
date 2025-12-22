@@ -1,4 +1,4 @@
-import io.github.zenhelix.gradle.plugin.task.PublishBundleMavenCentralTask
+import io.github.danielliu1123.deployer.PublishingType
 import org.gradle.kotlin.dsl.support.serviceOf
 import tel.schich.dockcross.execute.DockerRunner
 import tel.schich.dockcross.execute.NonContainerRunner
@@ -11,6 +11,7 @@ import java.nio.file.Paths
 plugins {
     id("tel.schich.libdatachannel.convention.common")
     alias(libs.plugins.dockcross)
+    alias(libs.plugins.mavenDeployer)
 }
 
 tasks.wrapper {
@@ -61,6 +62,7 @@ fun produceVersion(): String {
 }
 
 version = produceVersion()
+val isSnapshot = version.toString().endsWith("-SNAPSHOT")
 description = "${project.name} is a binding to the libdatachannel that feels native to Java developers."
 
 val currentVersion by tasks.registering(DefaultTask::class) {
@@ -350,24 +352,69 @@ publishing.publications.withType<MavenPublication>().configureEach {
     }
 }
 
+private fun Project.getSecret(name: String): Provider<String> = provider {
+    val env = System.getenv(name)
+        ?.ifBlank { null }
+    if (env != null) {
+        return@provider env
+    }
+
+    val propName = name.split("_")
+        .map { it.lowercase() }
+        .joinToString(separator = "") { word ->
+            word.replaceFirstChar { it.uppercase() }
+        }
+        .replaceFirstChar { it.lowercase() }
+
+    property(propName) as String
+}
+
+deploy {
+    // dirs to upload, they will all be packaged into one bundle
+    dirs = provider {
+        allprojects
+            .map { it.layout.buildDirectory.dir("repo").get().asFile }
+            .filter { it.exists() }
+            .toList()
+    }
+    username = project.getSecret("MAVEN_CENTRAL_PORTAL_USERNAME")
+    password = project.getSecret("MAVEN_CENTRAL_PORTAL_PASSWORD")
+    publishingType = if (Constants.CI) {
+        PublishingType.WAIT_FOR_PUBLISHED
+    } else {
+        PublishingType.USER_MANAGED
+    }
+}
+
+tasks.deploy {
+    for (project in allprojects) {
+        val publishTasks = project.tasks
+            .withType<PublishToMavenRepository>()
+        mustRunAfter(publishTasks)
+    }
+}
+
 val mavenCentralDeploy by tasks.registering(DefaultTask::class) {
     group = "publishing"
-    val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
 
-    if (isSnapshot) {
-        logger.lifecycle("Snapshot deployment!")
-        for (project in allprojects) {
-            val tasks = project.tasks
-                .withType<PublishToMavenRepository>()
-                .matching { it.repository.name == "mavenCentralSnapshots" }
-            dependsOn(tasks)
-        }
+    val repo = if (isSnapshot) {
+        Constants.SNAPSHOTS_REPO
     } else {
-        logger.lifecycle("Release deployment!")
-        for (project in allprojects) {
-            val tasks = project.tasks
-                .withType<PublishBundleMavenCentralTask>()
-            dependsOn(tasks)
+        dependsOn(tasks.deploy)
+        Constants.RELEASES_REPO
+    }
+    for (project in allprojects) {
+        val publishTasks = project.tasks
+            .withType<PublishToMavenRepository>()
+            .matching { it.repository.name == repo }
+        dependsOn(publishTasks)
+    }
+
+    doFirst {
+        if (isSnapshot) {
+            logger.lifecycle("Snapshot deployment!")
+        } else {
+            logger.lifecycle("Release deployment!")
         }
     }
 }

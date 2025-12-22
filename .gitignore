@@ -7,3 +7,4 @@ out/
 /jni/cmake-build-*/
 /jni/venv
 *.log
+*-bundle.zip

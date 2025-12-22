@@ -1,11 +1,11 @@
 [versions]
 dockcrossPlugin = "0.4.2"
 jniAccessGenerator = "1.2.2"
-mavenCentralPublish = "0.11.0"
 jdtAnnotations = "2.4.100"
 slf4j = "2.0.17"
 logback = "1.5.22"
 junitJupiter = "6.0.1"
+mavenDeployer = "0.5.2"
 
 [libraries]
 jniAccessGenerator = { module = "tel.schich:jni-access-generator", version.ref = "jniAccessGenerator" }
@@ -16,4 +16,4 @@ junitJupiter = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref 
 
 [plugins]
 dockcross = { id = "tel.schich.dockcross", version.ref = "dockcrossPlugin" }
-mavenCentralPublish = { id = "io.github.zenhelix.maven-central-publish", version.ref = "mavenCentralPublish" }
+mavenDeployer = { id = "io.github.danielliu1123.deployer", version.ref = "mavenDeployer" }
