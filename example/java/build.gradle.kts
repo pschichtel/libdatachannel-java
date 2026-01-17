@@ -9,7 +9,7 @@ repositories {
 
 dependencies {
     implementation("tel.schich:libdatachannel-java-arch-detect")
-    implementation("ch.qos.logback:logback-classic:1.5.24")
+    implementation("ch.qos.logback:logback-classic:1.5.25")
 }
 
 java {
