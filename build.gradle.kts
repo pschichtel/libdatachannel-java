@@ -421,7 +421,7 @@ val mavenCentralDeploy by tasks.registering(DefaultTask::class) {
 
 val githubActions by tasks.registering(DefaultTask::class) {
     group = "publishing"
-    val deployRefPattern = """^refs/(?:tags/v\d+.\d+.\d+.\d+|heads/main)$""".toRegex()
+    val deployRefPattern = """^refs/(?:tags/v\d+\.\d+\.\d+\.\d+|heads/main)$""".toRegex()
     val ref = System.getenv("GITHUB_REF")?.ifBlank { null }?.trim()
 
     if (ref != null && deployRefPattern.matches(ref)) {
