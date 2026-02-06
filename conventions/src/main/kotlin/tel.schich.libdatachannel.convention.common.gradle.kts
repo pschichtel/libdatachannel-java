@@ -11,18 +11,18 @@ java {
     withJavadocJar()
 
     toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
-    }
-
-    testing {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(25)
-        }
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.compileJava {
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
 }
 
 tasks.withType<JavaCompile>().configureEach {
