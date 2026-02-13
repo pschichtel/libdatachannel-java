@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD 11)
 option(PROJECT_VERSION "The version of the project" "unspecified")
 
 set(NO_WEBSOCKET ON CACHE BOOL "configure libdatachannel build")
-set(NO_MEDIA ON CACHE BOOL "configure libdatachannel build")
 set(NO_TESTS ON CACHE BOOL "configure libdatachannel build")
 set(NO_EXAMPLES ON CACHE BOOL "configure libdatachannel build")
 add_subdirectory(libdatachannel)
