@@ -3,8 +3,8 @@ dockcrossPlugin = "0.4.2"
 jniAccessGenerator = "1.2.2"
 jdtAnnotations = "2.4.100"
 slf4j = "2.0.17"
-logback = "1.5.27"
-junitJupiter = "6.0.2"
+logback = "1.5.32"
+junitJupiter = "6.0.3"
 mavenDeployer = "0.5.2"
 
 [libraries]
