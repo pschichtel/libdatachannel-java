@@ -55,5 +55,5 @@ add_library(datachannel-java SHARED
         src/native_channel.c
         src/native_peer.c
         src/native_track.c
-        src/callback.c)
+        src/callback.cpp)
 target_link_libraries(datachannel-java PRIVATE datachannel-static)
