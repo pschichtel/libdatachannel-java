@@ -1,5 +1,5 @@
 [versions]
-dockcrossPlugin = "0.4.2"
+dockcrossPlugin = "0.4.3"
 jniAccessGenerator = "1.2.2"
 jdtAnnotations = "2.4.100"
 slf4j = "2.0.17"
