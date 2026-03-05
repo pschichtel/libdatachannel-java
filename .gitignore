@@ -8,3 +8,4 @@ out/
 /jni/venv
 *.log
 *-bundle.zip
+.kotlin/
