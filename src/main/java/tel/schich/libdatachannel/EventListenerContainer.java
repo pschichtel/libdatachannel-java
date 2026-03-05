@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -18,15 +17,13 @@ public class EventListenerContainer<T> implements Closeable {
     private final Consumer<Boolean> lifecycleCallback;
     private final List<T> listeners;
     private final Lock changeLock;
-    private final Executor executor;
     private volatile boolean closed;
 
-    public EventListenerContainer(String eventName, Consumer<Boolean> lifecycleCallback, Executor executor) {
+    public EventListenerContainer(String eventName, Consumer<Boolean> lifecycleCallback) {
         this.eventName = eventName;
         this.lifecycleCallback = lifecycleCallback;
         this.listeners = new CopyOnWriteArrayList<>();
         this.changeLock = new ReentrantLock();
-        this.executor = executor;
         this.closed = false;
     }
 
@@ -39,15 +36,13 @@ public class EventListenerContainer<T> implements Closeable {
             LOGGER.warn("Invoke attempted on closed container for event {}", eventName);
             return;
         }
-        executor.execute(() -> {
-            for (T listener : this.listeners) {
-                try {
-                    invoker.accept(listener);
-                } catch (Throwable t) {
-                    LOGGER.error("Handler for event {} failed!", eventName, t);
-                }
+        for (T listener : this.listeners) {
+            try {
+                invoker.accept(listener);
+            } catch (Throwable t) {
+                LOGGER.error("Handler for event {} failed!", eventName, t);
             }
-        });
+        }
     }
 
     public void register(T listener) {

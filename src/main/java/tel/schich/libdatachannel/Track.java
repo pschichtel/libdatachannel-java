@@ -12,33 +12,45 @@ import static tel.schich.libdatachannel.Util.wrapError;
 import java.io.Closeable;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Track implements Closeable {
     private final PeerConnection peer;
     private final int trackHandle;
+    private final AtomicBoolean closed;
 
     public Track(final PeerConnection peer, final int trackHandle) {
         this.peer = peer;
         this.trackHandle = trackHandle;
+        this.closed = new AtomicBoolean(false);
     }
 
     public PeerConnection peer() {
         return peer;
     }
 
+    private void ensureNotClosed() {
+        if (closed.get()) {
+            throw new IllegalStateException("Track is closed");
+        }
+    }
+
     // After this function has been called, tr must not be used in a function call anymore. This function will block until all scheduled callbacks
     // of tr return (except the one this function might be called in) and no other callback will be called for tr after it returns.
     public String description() {
+        ensureNotClosed();
         return rtcGetTrackDescription(trackHandle);
     }
 
     // Retrieves the mid (media indentifier) of a Track.
     public String mediaId() {
+        ensureNotClosed();
         return rtcGetTrackMid(trackHandle);
     }
 
     // Retrieves the direction of a Track.
     public Direction direction() {
+        ensureNotClosed();
         final int directionInt = rtcGetTrackDirection(trackHandle);
         final Direction direction = Direction.of(directionInt);
         if (direction == null) {
@@ -49,8 +61,11 @@ public class Track implements Closeable {
 
     @Override
     public void close() {
-        peer.dropTrackState(trackHandle);
+        if (!closed.compareAndSet(false, true)) {
+            return;
+        }
         wrapError("rtcDeleteTrack", rtcDeleteTrack(trackHandle));
+        peer.dropTrackState(trackHandle);
     }
 
     @Override
