@@ -1,4 +1,4 @@
-#include "util.h"
+#include "util.hpp"
 #include <errno.h>
 #include <jni-c-to-java.h>
 #include <jni-java-to-c.h>

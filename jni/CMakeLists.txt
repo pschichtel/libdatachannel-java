@@ -50,10 +50,10 @@ endif()
 
 add_library(datachannel-java SHARED
         generated/jni-c-to-java.c
-        src/init.c
-        src/util.c
-        src/native_channel.c
-        src/native_peer.c
-        src/native_track.c
+        src/init.cpp
+        src/util.cpp
+        src/native_channel.cpp
+        src/native_peer.cpp
+        src/native_track.cpp
         src/callback.cpp)
 target_link_libraries(datachannel-java PRIVATE datachannel-static)

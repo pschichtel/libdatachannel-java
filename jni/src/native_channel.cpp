@@ -1,6 +1,6 @@
-#include "callback.h"
+#include "callback.hpp"
 #include "jni-c-to-java.h"
-#include "util.h"
+#include "util.hpp"
 #include <jni-java-to-c.h>
 #include <jni.h>
 #include <rtc/rtc.h>

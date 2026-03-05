@@ -1,4 +1,4 @@
-#include "callback.h"
+#include "callback.hpp"
 #include "global_jvm.h"
 
 jvm_callback* allocate_callback(JNIEnv* env, jobject callback) {
