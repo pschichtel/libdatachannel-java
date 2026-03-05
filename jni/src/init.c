@@ -39,7 +39,7 @@ JNIEnv* get_jni_env() {
     return get_jni_env_from_jvm(global_JVM);
 }
 
-void logger_callback(rtcLogLevel level, const char* message) {
+void logger_callback(const rtcLogLevel level, const char* message) {
     if (message == NULL) {
         return;
     }

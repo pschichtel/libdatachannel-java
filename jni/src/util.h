@@ -17,7 +17,7 @@ jstring get_dynamic_string(JNIEnv* env, const char* func_name, get_dynamic_strin
 
 jint wrap_error(JNIEnv* env, const char* message, int result);
 
-void throw_native_exception(JNIEnv* env, char* msg);
+void throw_native_exception(JNIEnv* env, const char* msg);
 
 #define THROW_FAILED_GET_STR(env, expr) throw_native_exception(env, "failed to get string for " #expr)
 

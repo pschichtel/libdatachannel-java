@@ -5,20 +5,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-jstring get_dynamic_string(JNIEnv* env, const char* func_name, get_dynamic_string_func func, int handle) {
-    int size = wrap_error(env, "", func(handle, NULL, -1));
+jstring get_dynamic_string(JNIEnv* env, const char* func_name, const get_dynamic_string_func func, const int handle) {
+    const int size = wrap_error(env, "", func(handle, NULL, -1));
     char* memory = malloc(size);
     if (memory == NULL) {
         throw_native_exception(env, "Failed to allocate memory for string");
         return NULL;
     }
     wrap_error(env, func_name, func(handle, memory, size));
-    jstring result = (*env)->NewStringUTF(env, memory);
+    const jstring result = (*env)->NewStringUTF(env, memory);
     free(memory);
     return result;
 }
 
-jint wrap_error(JNIEnv* env, const char* message, int result) {
+jint wrap_error(JNIEnv* env, const char* message, const int result) {
     if (result > 0) {
         return result;
     }
@@ -43,15 +43,15 @@ jint wrap_error(JNIEnv* env, const char* message, int result) {
     }
 }
 
-void throw_native_exception(JNIEnv* env, char* msg) {
+void throw_native_exception(JNIEnv* env, const char* msg) {
     // It is necessary to get the errno before any Java or JNI function is called, as it
     // may become changed due to the VM operations.
-    int errorNumber = errno;
+    const int errorNumber = errno;
 
     throw_tel_schich_libdatachannel_exception_NativeOperationException_cstr(env, msg, errorNumber, strerror(errorNumber));
 }
 
-JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannel_freeMemory(JNIEnv* env, jclass clazz, jlong address) {
+JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannel_freeMemory(JNIEnv* env, jclass clazz, const jlong address) {
     void* ptr = (void*) (intptr_t) address;
     free(ptr);
 }

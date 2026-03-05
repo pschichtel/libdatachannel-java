@@ -16,33 +16,33 @@ void RTC_API handle_local_candidate(int pc, const char* candidate, const char* m
 }
 SET_CALLBACK_INTERFACE_IMPL(rtcSetLocalCandidateCallback, handle_local_candidate)
 
-void RTC_API handle_state_change(int pc, rtcState state, void* ptr) {
+void RTC_API handle_state_change(int pc, const rtcState state, void* ptr) {
     DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onStateChange, state);
 }
 SET_CALLBACK_INTERFACE_IMPL(rtcSetStateChangeCallback, handle_state_change)
 
-void RTC_API handle_ice_state_change(int pc, rtcIceState state, void* ptr) {
+void RTC_API handle_ice_state_change(int pc, const rtcIceState state, void* ptr) {
     DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onIceStateChange, state);
 }
 SET_CALLBACK_INTERFACE_IMPL(rtcSetIceStateChangeCallback, handle_ice_state_change)
 
-void RTC_API handle_gathering_state_change(int pc, rtcGatheringState state, void* ptr) {
+void RTC_API handle_gathering_state_change(int pc, const rtcGatheringState state, void* ptr) {
     DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onGatheringStateChange, state);
 }
 SET_CALLBACK_INTERFACE_IMPL(rtcSetGatheringStateChangeCallback, handle_gathering_state_change)
 
-void RTC_API handle_signaling_state_change(int pc, rtcSignalingState state, void* ptr) {
+void RTC_API handle_signaling_state_change(int pc, const rtcSignalingState state, void* ptr) {
     DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onSignalingStateChange, state);
 }
 SET_CALLBACK_INTERFACE_IMPL(rtcSetSignalingStateChangeCallback, handle_signaling_state_change)
 
-void RTC_API handle_data_channel(int pc, int channelHandle, void* ptr) {
+void RTC_API handle_data_channel(int pc, const int channelHandle, void* ptr) {
     rtcSetUserPointer(channelHandle, ptr);
     DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onDataChannel, channelHandle);
 }
 SET_CALLBACK_INTERFACE_IMPL(rtcSetDataChannelCallback, handle_data_channel)
 
-void RTC_API handle_track(int pc, int trackHandle, void* ptr) {
+void RTC_API handle_track(int pc, const int trackHandle, void* ptr) {
     rtcSetUserPointer(trackHandle, ptr);
     DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onTrack, trackHandle);
 }
@@ -50,15 +50,15 @@ SET_CALLBACK_INTERFACE_IMPL(rtcSetTrackCallback, handle_track)
 
 JNIEXPORT jint JNICALL
 Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIEnv* env, jclass clazz,
-                                                                            jobjectArray iceServers, jstring proxyServer,
-                                                                            jstring bindAddress, jint certificateType,
-                                                                            jint iceTransportPolicy,
-                                                                            jboolean enableIceTcp,
-                                                                            jboolean enableIceUdpMux,
-                                                                            jboolean disableAutoNegotiation,
-                                                                            jboolean forceMediaTransport,
-                                                                            jshort portRangeBegin, jshort portRangeEnd,
-                                                                            jint mtu, jint maxMessageSize) {
+                                                                            const jobjectArray iceServers, const jstring proxyServer,
+                                                                            const jstring bindAddress, const jint certificateType,
+                                                                            const jint iceTransportPolicy,
+                                                                            const jboolean enableIceTcp,
+                                                                            const jboolean enableIceUdpMux,
+                                                                            const jboolean disableAutoNegotiation,
+                                                                            const jboolean forceMediaTransport,
+                                                                            const jshort portRangeBegin, const jshort portRangeEnd,
+                                                                            const jint mtu, const jint maxMessageSize) {
     rtcConfiguration config = {
             .certificateType = certificateType,
             .iceTransportPolicy = iceTransportPolicy,
@@ -110,7 +110,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
         config.bindAddress = (*env)->GetStringUTFChars(env, bindAddress, NULL);
     }
 
-    jint result = (jint) rtcCreatePeerConnection(&config);
+    const jint result = (jint) rtcCreatePeerConnection(&config);
 
     if (proxyServer != NULL) {
         (*env)->ReleaseStringUTFChars(env, proxyServer, config.proxyServer);
@@ -120,8 +120,10 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
     }
 
     if (config.iceServers != NULL && config.iceServersCount > 0) {
-        for (int i = 0; i < config.iceServersCount; i++) {
-            (*env)->ReleaseStringUTFChars(env, serverStrings[i], config.iceServers[i]);
+        if (serverStrings != NULL) {
+            for (int i = 0; i < config.iceServersCount; i++) {
+                (*env)->ReleaseStringUTFChars(env, serverStrings[i], config.iceServers[i]);
+            }
         }
         free(config.iceServers);
         free(serverStrings);
@@ -131,13 +133,13 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
 }
 
 JNIEXPORT jint JNICALL
-Java_tel_schich_libdatachannel_LibDataChannelNative_rtcClosePeerConnection(JNIEnv* env, jclass clazz, jint peerHandle) {
+Java_tel_schich_libdatachannel_LibDataChannelNative_rtcClosePeerConnection(JNIEnv* env, jclass clazz, const jint peerHandle) {
     return rtcClosePeerConnection(peerHandle);
 }
 
 JNIEXPORT jint JNICALL
 Java_tel_schich_libdatachannel_LibDataChannelNative_rtcDeletePeerConnection(JNIEnv* env, jclass clazz,
-                                                                            jint peerHandle) {
+                                                                            const jint peerHandle) {
     struct jvm_callback* callback = rtcGetUserPointer(peerHandle);
     if (callback != NULL) {
         free_callback(env, callback);
@@ -147,7 +149,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcDeletePeerConnection(JNIE
 }
 
 
-JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSetLocalDescription(JNIEnv* env, jclass clazz, jint peerHandle, jstring type) {
+JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSetLocalDescription(JNIEnv* env, jclass clazz, const jint peerHandle, const jstring type) {
     const char* c_type = (*env)->GetStringUTFChars(env, type, NULL);
     if (c_type == NULL) {
         THROW_FAILED_GET_STR(env, type);
@@ -158,15 +160,15 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSe
     return result;
 }
 
-JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetLocalDescription(JNIEnv* env, jclass clazz, jint peerHandle) {
+JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetLocalDescription(JNIEnv* env, jclass clazz, const jint peerHandle) {
     return GET_DYNAMIC_STRING(env, rtcGetLocalDescription, peerHandle);
 }
 
-JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetLocalDescriptionType(JNIEnv* env, jclass clazz, jint peerHandle) {
+JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetLocalDescriptionType(JNIEnv* env, jclass clazz, const jint peerHandle) {
     return GET_DYNAMIC_STRING(env, rtcGetLocalDescriptionType, peerHandle);
 }
 
-JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSetRemoteDescription(JNIEnv* env, jclass clazz, jint peerHandle, jstring sdp, jstring type) {
+JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSetRemoteDescription(JNIEnv* env, jclass clazz, const jint peerHandle, const jstring sdp, const jstring type) {
     const char* c_sdp = (*env)->GetStringUTFChars(env, sdp, NULL);
     if (c_sdp == NULL) {
         THROW_FAILED_GET_STR(env, sdp);
@@ -178,21 +180,21 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSe
         THROW_FAILED_GET_STR(env, type);
         return EXCEPTION_THROWN;
     }
-    int result = WRAP_ERROR(env, rtcSetRemoteDescription(peerHandle, c_sdp, c_type));
+    const int result = WRAP_ERROR(env, rtcSetRemoteDescription(peerHandle, c_sdp, c_type));
     (*env)->ReleaseStringUTFChars(env, sdp, c_sdp);
     (*env)->ReleaseStringUTFChars(env, type, c_type);
     return result;
 }
 
-JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetRemoteDescription(JNIEnv* env, jclass clazz, jint peerHandle) {
+JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetRemoteDescription(JNIEnv* env, jclass clazz, const jint peerHandle) {
     return GET_DYNAMIC_STRING(env, rtcGetRemoteDescription, peerHandle);
 }
 
-JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetRemoteDescriptionType(JNIEnv* env, jclass clazz, jint peerHandle) {
+JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetRemoteDescriptionType(JNIEnv* env, jclass clazz, const jint peerHandle) {
     return GET_DYNAMIC_STRING(env, rtcGetRemoteDescriptionType, peerHandle);
 }
 
-JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAddRemoteCandidate(JNIEnv* env, jclass clazz, jint peerHandle, jstring candidate, jstring mediaId) {
+JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAddRemoteCandidate(JNIEnv* env, jclass clazz, const jint peerHandle, const jstring candidate, const jstring mediaId) {
     const char* c_candidate = NULL;
     if (candidate != NULL) {
         c_candidate = (*env)->GetStringUTFChars(env, candidate, NULL);
@@ -213,7 +215,7 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAd
         }
     }
 
-    int result = rtcAddRemoteCandidate(peerHandle, c_candidate, c_mediaId);
+    const int result = rtcAddRemoteCandidate(peerHandle, c_candidate, c_mediaId);
     if (c_candidate != NULL) {
         (*env)->ReleaseStringUTFChars(env, candidate, c_candidate);
     }
@@ -224,15 +226,15 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAd
     return result;
 }
 
-JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetLocalAddress(JNIEnv* env, jclass clazz, jint peerHandle) {
+JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetLocalAddress(JNIEnv* env, jclass clazz, const jint peerHandle) {
     return GET_DYNAMIC_STRING(env, rtcGetLocalAddress, peerHandle);
 }
 
-JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetRemoteAddress(JNIEnv* env, jclass clazz, jint peerHandle) {
+JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetRemoteAddress(JNIEnv* env, jclass clazz, const jint peerHandle) {
     return GET_DYNAMIC_STRING(env, rtcGetRemoteAddress, peerHandle);
 }
 
-JNIEXPORT jobject JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetSelectedCandidatePair(JNIEnv* env, jclass clazz, jint peerHandle) {
+JNIEXPORT jobject JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetSelectedCandidatePair(JNIEnv* env, jclass clazz, const jint peerHandle) {
     int bufSize = 50;
     char* local = malloc(bufSize);
     if (local == NULL) {
@@ -262,7 +264,7 @@ JNIEXPORT jobject JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rt
     return candidatePair;
 }
 
-JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_setupPeerConnectionListener(JNIEnv* env, jclass clazz, jint peerHandle, jobject listener) {
+JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_setupPeerConnectionListener(JNIEnv* env, jclass clazz, const jint peerHandle, const jobject listener) {
     struct jvm_callback* jvm_callback = allocate_callback(env, listener);
     if (jvm_callback == NULL) {
         return EXCEPTION_THROWN;
