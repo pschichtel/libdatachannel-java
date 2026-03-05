@@ -96,6 +96,11 @@ val buildReleaseBinaries = project.findProperty("libdatachannel.build-release-bi
     ?.ifEmpty { null }
     ?.toBooleanStrictOrNull()
     ?: !project.version.toString().endsWith("-SNAPSHOT")
+val enableNativeHardening = project.findProperty("libdatachannel.native-hardening")
+    ?.toString()
+    ?.ifEmpty { null }
+    ?.toBooleanStrictOrNull()
+    ?: true
 
 fun DockcrossRunTask.configureSshRemoteBuild(target: BuildTarget) {
     if (!ci) {
@@ -157,6 +162,7 @@ fun DockcrossRunTask.baseConfigure(outputTo: Directory, target: BuildTarget) {
     extraEnv.put("RELATIVE_PROJECT_PATH", output.get().asFile.toPath().relativize(jniPath.asFile.toPath()).toString())
     extraEnv.put("PROJECT_VERSION", project.version.toString())
     extraEnv.put("PROJECT_BUILD_TYPE", if (buildReleaseBinaries) "Release" else "Debug")
+    extraEnv.put("ENABLE_HARDENING", if (enableNativeHardening) "ON" else "OFF")
     extraEnv.put("TARGET_FAMILY", target.family)
     extraEnv.put("TARGET_CLASSIFIER", target.classifier)
     target.image?.let {

@@ -7,6 +7,9 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAd
     const char* chars = NULL;
     if (sdp != NULL) {
         chars = (*env)->GetStringUTFChars(env, sdp, NULL);
+        if (chars == NULL) {
+            return EXCEPTION_THROWN;
+        }
     }
     int result = rtcAddTrack(peerHandle, chars);
     rtcSetUserPointer(result, rtcGetUserPointer(peerHandle));

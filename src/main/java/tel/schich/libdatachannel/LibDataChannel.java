@@ -1,15 +1,20 @@
 package tel.schich.libdatachannel;
 
+import org.eclipse.jdt.annotation.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tel.schich.jniaccess.JNIAccess;
 
 import java.lang.ref.Cleaner;
+import java.nio.ByteBuffer;
+import java.util.Objects;
+import java.util.function.IntFunction;
 
 public abstract class LibDataChannel {
     static final Cleaner CLEANER = Cleaner.create();
     private static final Logger LOGGER = LoggerFactory.getLogger(LibDataChannel.class);
     private static volatile boolean initialized = false;
+    private static volatile IntFunction<ByteBuffer> allocator = ByteBuffer::allocateDirect;
 
     public static final String LIB_NAME = "datachannel-java";
 
@@ -54,10 +59,30 @@ public abstract class LibDataChannel {
         }
     }
 
-    @JNIAccess
-    private static void freeOnGarbageCollection(Object owner, long nativeAddress) {
-        CLEANER.register(owner, () -> freeMemory(nativeAddress));
+
+    public static void setAllocator(@NonNull IntFunction<ByteBuffer> allocator) {
+        LibDataChannel.allocator = Objects.requireNonNull(allocator, "allocator");
     }
+
+
+    @JNIAccess
+    private static ByteBuffer allocate(int size) {
+        if (size < 0) {
+            throw new IllegalArgumentException("size must be >= 0");
+        }
+        ByteBuffer buffer = Objects.requireNonNull(allocator.apply(size), "allocator returned null");
+        if (!buffer.isDirect()) {
+            throw new IllegalArgumentException("allocator must return a direct ByteBuffer");
+        }
+        if (buffer.capacity() < size) {
+            throw new IllegalArgumentException("allocator returned buffer with insufficient capacity");
+        }
+        buffer.clear();
+        buffer.limit(size);
+        return buffer;
+    }
+
+     
 
     private static native void freeMemory(long pointer);
 }

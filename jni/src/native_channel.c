@@ -24,7 +24,9 @@ SET_CALLBACK_INTERFACE_IMPL(rtcSetErrorCallback, handle_channel_error)
 
 void RTC_API handle_channel_message(int channelHandle, const char* message, int size, void* ptr) {
     struct jvm_callback* cb = ptr;
+    if (cb == NULL) return;
     JNIEnv* env = get_jni_env();
+    if (env == NULL) return;
     if (size < 0) {
         jstring text = (*env)->NewStringUTF(env, message);
         call_tel_schich_libdatachannel_PeerConnectionListener_onChannelTextMessage(env, cb->instance, channelHandle, text);
@@ -77,9 +79,18 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreateDataChannelEx(JNIEn
     const char* c_label = NULL;
     if (label != NULL) {
         c_label = (*env)->GetStringUTFChars(env, label, NULL);
+        if (c_label == NULL) {
+            return EXCEPTION_THROWN;
+        }
     }
     if (protocol != NULL) {
         init.protocol = (*env)->GetStringUTFChars(env, protocol, NULL);
+        if (init.protocol == NULL) {
+            if (c_label != NULL) {
+                (*env)->ReleaseStringUTFChars(env, label, c_label);
+            }
+            return EXCEPTION_THROWN;
+        }
     }
 
     jint result = rtcCreateDataChannelEx(peerHandle, c_label, &init);
@@ -128,7 +139,14 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSe
     }
     char* buffer = (*env)->GetDirectBufferAddress(env, data);
     if (buffer == NULL) {
-        return RTC_ERR_SUCCESS;
+        return WRAP_ERROR(env, RTC_ERR_INVALID);
+    }
+    jlong capacity = (*env)->GetDirectBufferCapacity(env, data);
+    if (capacity < 0 || offset < 0 || offset > capacity) {
+        return WRAP_ERROR(env, RTC_ERR_INVALID);
+    }
+    if (length >= 0 && ((jlong) offset + (jlong) length > capacity)) {
+        return WRAP_ERROR(env, RTC_ERR_TOO_SMALL);
     }
     char* buffer_offset = buffer + offset;
     return rtcSendMessage(channelHandle, buffer_offset, length);
@@ -140,31 +158,29 @@ JNIEXPORT jobject JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rt
     if (size == 0) {
         return NULL;
     }
-    void* buffer = malloc(size);
-    if (buffer == NULL) {
-        throw_native_exception(env, "Failed to allocate memory for message");
+
+    jobject byteBuffer = call_tel_schich_libdatachannel_LibDataChannel_allocate(env, size);
+    if (byteBuffer == NULL) {
         return NULL;
     }
-    int result = rtcReceiveMessage(channelHandle, buffer, &size);
+    void* target = (*env)->GetDirectBufferAddress(env, byteBuffer);
+    if (target == NULL) {
+        (*env)->DeleteLocalRef(env, byteBuffer);
+        throw_native_exception(env, "LibDataChannel allocator must return a direct ByteBuffer");
+        return NULL;
+    }
+
+    int receiveSize = size;
+    int result = rtcReceiveMessage(channelHandle, target, &receiveSize);
     if (result == RTC_ERR_NOT_AVAIL) {
-        free(buffer);
+        (*env)->DeleteLocalRef(env, byteBuffer);
         return NULL;
     }
     if (result < 0) {
-        free(buffer);
         WRAP_ERROR(env, result);
+        (*env)->DeleteLocalRef(env, byteBuffer);
         return NULL;
     }
-    WRAP_ERROR(env, result);
-
-    jobject byteBuffer = (*env)->NewDirectByteBuffer(env, buffer, size);
-    if (byteBuffer == NULL) {
-        free(buffer);
-        throw_native_exception(env, "Failed to create direct byte buffer");
-        return NULL;
-    }
-    // ensure the buffer cleanup is managed
-    call_tel_schich_libdatachannel_LibDataChannel_freeOnGarbageCollection(env, byteBuffer, (jlong) (intptr_t) buffer);
     return byteBuffer;
 }
 
@@ -175,7 +191,11 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcRe
     }
     char* base = (*env)->GetDirectBufferAddress(env, buffer);
     if (base == NULL) {
-        return 0;
+        return WRAP_ERROR(env, RTC_ERR_INVALID);
+    }
+    jlong bufferCapacity = (*env)->GetDirectBufferCapacity(env, buffer);
+    if (bufferCapacity < 0 || offset < 0 || capacity < 0 || offset > bufferCapacity || ((jlong) offset + (jlong) capacity > bufferCapacity)) {
+        return WRAP_ERROR(env, RTC_ERR_INVALID);
     }
 
     char* data = base + offset;

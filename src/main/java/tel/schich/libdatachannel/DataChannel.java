@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * An RTC data channel, created from a {@link PeerConnection}.
@@ -38,6 +38,7 @@ import java.util.concurrent.Executor;
 public class DataChannel implements Closeable {
     private final PeerConnection peer;
     final int channelHandle;
+    private final AtomicBoolean closed;
 
     public final EventListenerContainer<DataChannelCallback.Open> onOpen;
     public final EventListenerContainer<DataChannelCallback.Closed> onClosed;
@@ -46,16 +47,17 @@ public class DataChannel implements Closeable {
     public final EventListenerContainer<DataChannelCallback.BufferedAmountLow> onBufferedAmountLow;
     public final EventListenerContainer<DataChannelCallback.Available> onAvailable;
 
-    DataChannel(final PeerConnection peer, final int channelHandle, final Executor executor) {
+    DataChannel(final PeerConnection peer, final int channelHandle) {
         this.peer = peer;
         this.channelHandle = channelHandle;
+        this.closed = new AtomicBoolean(false);
 
-        this.onOpen = new EventListenerContainer<>("ChannelOpen", set -> rtcSetOpenCallback(channelHandle, set), executor);
-        this.onClosed = new EventListenerContainer<>("ChannelClosed", set -> rtcSetClosedCallback(channelHandle, set), executor);
-        this.onError = new EventListenerContainer<>("ChannelError", set -> rtcSetErrorCallback(channelHandle, set), executor);
-        this.onMessage = new EventListenerContainer<>("ChannelMessage", set -> rtcSetMessageCallback(channelHandle, set), executor);
-        this.onBufferedAmountLow = new EventListenerContainer<>("ChannelBufferedAmountLow", set -> rtcSetBufferedAmountLowCallback(channelHandle, set), executor);
-        this.onAvailable = new EventListenerContainer<>("ChannelAvailable", set -> rtcSetAvailableCallback(channelHandle, set), executor);
+        this.onOpen = new EventListenerContainer<>("ChannelOpen", set -> rtcSetOpenCallback(channelHandle, set));
+        this.onClosed = new EventListenerContainer<>("ChannelClosed", set -> rtcSetClosedCallback(channelHandle, set));
+        this.onError = new EventListenerContainer<>("ChannelError", set -> rtcSetErrorCallback(channelHandle, set));
+        this.onMessage = new EventListenerContainer<>("ChannelMessage", set -> rtcSetMessageCallback(channelHandle, set));
+        this.onBufferedAmountLow = new EventListenerContainer<>("ChannelBufferedAmountLow", set -> rtcSetBufferedAmountLowCallback(channelHandle, set));
+        this.onAvailable = new EventListenerContainer<>("ChannelAvailable", set -> rtcSetAvailableCallback(channelHandle, set));
     }
 
     /**
@@ -67,7 +69,14 @@ public class DataChannel implements Closeable {
         return peer;
     }
 
+    private void ensureNotClosed() {
+        if (closed.get()) {
+            throw new IllegalStateException("DataChannel is closed");
+        }
+    }
+
     private void sendMessage(ByteBuffer data, int offset, int length) {
+        ensureNotClosed();
         wrapError("sendMessage", rtcSendMessage(channelHandle, data, offset, length));
     }
 
@@ -104,6 +113,9 @@ public class DataChannel implements Closeable {
      */
     @Override
     public void close() {
+        if (!closed.compareAndSet(false, true)) {
+            return;
+        }
         if (rtcClose(channelHandle) != ERR_INVALID) {
             rtcDeleteDataChannel(channelHandle);
         }
@@ -123,7 +135,7 @@ public class DataChannel implements Closeable {
      * @return true if closed
      */
     public boolean isClosed() {
-        return rtcIsClosed(channelHandle);
+        return closed.get() || rtcIsClosed(channelHandle);
     }
 
     /**
@@ -132,6 +144,9 @@ public class DataChannel implements Closeable {
      * @return true if open
      */
     public boolean isOpen() {
+        if (closed.get()) {
+            return false;
+        }
         return rtcIsOpen(channelHandle);
     }
 
@@ -141,6 +156,7 @@ public class DataChannel implements Closeable {
      * @return the maximum message size
      */
     public int maxMessageSize() {
+        ensureNotClosed();
         return wrapError("rtcMaxMessageSize", rtcMaxMessageSize(channelHandle));
     }
 
@@ -156,6 +172,7 @@ public class DataChannel implements Closeable {
      * @param amount the amount
      */
     public void bufferedAmountLowThreshold(int amount) {
+        ensureNotClosed();
         wrapError("rtcSetBufferedAmountLowThreshold", rtcSetBufferedAmountLowThreshold(channelHandle, amount));
     }
 
@@ -168,6 +185,7 @@ public class DataChannel implements Closeable {
      * @return the received message
      */
     public Optional<ByteBuffer> receiveMessage() {
+        ensureNotClosed();
         return Optional.ofNullable(rtcReceiveMessage(channelHandle));
     }
 
@@ -182,6 +200,7 @@ public class DataChannel implements Closeable {
      */
     public int receiveMessage(ByteBuffer buffer) {
         ensureDirect(buffer);
+        ensureNotClosed();
         return rtcReceiveMessageInto(channelHandle, buffer, buffer.position(), buffer.remaining());
     }
 
@@ -194,6 +213,7 @@ public class DataChannel implements Closeable {
      * @return the available amount
      */
     public int availableAmount() {
+        ensureNotClosed();
         return wrapError("rtcGetAvailableAmount", rtcGetAvailableAmount(channelHandle));
     }
 
@@ -206,6 +226,7 @@ public class DataChannel implements Closeable {
      * @return the buffered amount
      */
     public int bufferedAmount() {
+        ensureNotClosed();
         return wrapError("rtcGetBufferedAmount", rtcGetBufferedAmount(channelHandle));
     }
 
@@ -216,6 +237,7 @@ public class DataChannel implements Closeable {
      * @return the stream id
      */
     public int streamId() {
+        ensureNotClosed();
         return wrapError("rtcGetDataChannelStream", rtcGetDataChannelStream(channelHandle));
     }
 
@@ -225,6 +247,7 @@ public class DataChannel implements Closeable {
      * @return the label
      */
     public String label() {
+        ensureNotClosed();
         return rtcGetDataChannelLabel(channelHandle);
     }
 
@@ -234,6 +257,7 @@ public class DataChannel implements Closeable {
      * @return the protocol
      */
     public String protocol() {
+        ensureNotClosed();
         return rtcGetDataChannelProtocol(channelHandle);
     }
 
@@ -243,6 +267,7 @@ public class DataChannel implements Closeable {
      * @return the reliability
      */
     public DataChannelReliability reliability() {
+        ensureNotClosed();
         return rtcGetDataChannelReliability(channelHandle);
     }
 

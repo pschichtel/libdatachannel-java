@@ -25,6 +25,7 @@ void throw_native_exception(JNIEnv* env, char* msg);
 
 #define DISPATCH_JNI(target, args...) \
     struct jvm_callback* cb = ptr;    \
+    if (cb == NULL) return;           \
     JNIEnv* env = get_jni_env();      \
     if (env == NULL) return;          \
     target(env, cb->instance, args)

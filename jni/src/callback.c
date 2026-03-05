@@ -11,6 +11,11 @@ struct jvm_callback* allocate_callback(JNIEnv* env, jobject callback) {
     }
     (*env)->GetJavaVM(env, &cb->vm);
     cb->instance = (*env)->NewGlobalRef(env, callback);
+    if (cb->instance == NULL) {
+        free(cb);
+        throw_native_exception(env, "Failed to create global callback reference");
+        return NULL;
+    }
     return cb;
 }
 

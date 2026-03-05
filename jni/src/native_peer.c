@@ -88,15 +88,31 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
 
             for (int i = 0; i < config.iceServersCount; i++) {
                 serverStrings[i] = (*env)->GetObjectArrayElement(env, iceServers, i);// we need a reference to release later
-                config.iceServers[i] = (*env)->GetStringUTFChars(env, serverStrings[i], NULL);
-                if (config.iceServers[i] == NULL) {
-                    // release everything and throw an exception
+                if (serverStrings[i] == NULL) {
                     for (int j = 0; j < i; j++) {
-                        (*env)->ReleaseStringUTFChars(env, serverStrings[j], config.iceServers[j]);
+                        if (config.iceServers[j] != NULL) {
+                            (*env)->ReleaseStringUTFChars(env, serverStrings[j], config.iceServers[j]);
+                        }
+                        (*env)->DeleteLocalRef(env, serverStrings[j]);
                     }
                     free(config.iceServers);
                     free(serverStrings);
-                    throw_native_exception(env, "Failed to get ice server string!");
+                    throw_native_exception(env, "iceServers must not contain null values");
+                    return EXCEPTION_THROWN;
+                }
+                config.iceServers[i] = (*env)->GetStringUTFChars(env, serverStrings[i], NULL);
+                if (config.iceServers[i] == NULL) {
+                    // release everything and throw an exception
+                    for (int j = 0; j <= i; j++) {
+                        if (j < i && config.iceServers[j] != NULL) {
+                            (*env)->ReleaseStringUTFChars(env, serverStrings[j], config.iceServers[j]);
+                        }
+                        if (serverStrings[j] != NULL) {
+                            (*env)->DeleteLocalRef(env, serverStrings[j]);
+                        }
+                    }
+                    free(config.iceServers);
+                    free(serverStrings);
                     return EXCEPTION_THROWN;
                 }
             }
@@ -105,9 +121,34 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
 
     if (proxyServer != NULL) {
         config.proxyServer = (*env)->GetStringUTFChars(env, proxyServer, NULL);
+        if (config.proxyServer == NULL) {
+            if (config.iceServers != NULL && config.iceServersCount > 0) {
+                for (int i = 0; i < config.iceServersCount; i++) {
+                    (*env)->ReleaseStringUTFChars(env, serverStrings[i], config.iceServers[i]);
+                    (*env)->DeleteLocalRef(env, serverStrings[i]);
+                }
+                free(config.iceServers);
+                free(serverStrings);
+            }
+            return EXCEPTION_THROWN;
+        }
     }
     if (bindAddress != NULL) {
         config.bindAddress = (*env)->GetStringUTFChars(env, bindAddress, NULL);
+        if (config.bindAddress == NULL) {
+            if (proxyServer != NULL) {
+                (*env)->ReleaseStringUTFChars(env, proxyServer, config.proxyServer);
+            }
+            if (config.iceServers != NULL && config.iceServersCount > 0) {
+                for (int i = 0; i < config.iceServersCount; i++) {
+                    (*env)->ReleaseStringUTFChars(env, serverStrings[i], config.iceServers[i]);
+                    (*env)->DeleteLocalRef(env, serverStrings[i]);
+                }
+                free(config.iceServers);
+                free(serverStrings);
+            }
+            return EXCEPTION_THROWN;
+        }
     }
 
     jint result = (jint) rtcCreatePeerConnection(&config);
@@ -122,6 +163,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
     if (config.iceServers != NULL && config.iceServersCount > 0) {
         for (int i = 0; i < config.iceServersCount; i++) {
             (*env)->ReleaseStringUTFChars(env, serverStrings[i], config.iceServers[i]);
+            (*env)->DeleteLocalRef(env, serverStrings[i]);
         }
         free(config.iceServers);
         free(serverStrings);
@@ -139,15 +181,18 @@ JNIEXPORT jint JNICALL
 Java_tel_schich_libdatachannel_LibDataChannelNative_rtcDeletePeerConnection(JNIEnv* env, jclass clazz,
                                                                             jint peerHandle) {
     struct jvm_callback* callback = rtcGetUserPointer(peerHandle);
-    if (callback != NULL) {
+    jint result = rtcDeletePeerConnection(peerHandle);
+    if ((result == RTC_ERR_SUCCESS || result == RTC_ERR_INVALID) && callback != NULL) {
         free_callback(env, callback);
     }
-
-    return rtcDeletePeerConnection(peerHandle);
+    return result;
 }
 
 
 JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSetLocalDescription(JNIEnv* env, jclass clazz, jint peerHandle, jstring type) {
+    if (type == NULL) {
+        return WRAP_ERROR(env, rtcSetLocalDescription(peerHandle, NULL));
+    }
     const char* c_type = (*env)->GetStringUTFChars(env, type, NULL);
     if (c_type == NULL) {
         THROW_FAILED_GET_STR(env, type);
@@ -167,20 +212,29 @@ JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rt
 }
 
 JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSetRemoteDescription(JNIEnv* env, jclass clazz, jint peerHandle, jstring sdp, jstring type) {
+    if (sdp == NULL) {
+        throw_native_exception(env, "sdp must not be null");
+        return EXCEPTION_THROWN;
+    }
     const char* c_sdp = (*env)->GetStringUTFChars(env, sdp, NULL);
     if (c_sdp == NULL) {
         THROW_FAILED_GET_STR(env, sdp);
         return EXCEPTION_THROWN;
     }
-    const char* c_type = (*env)->GetStringUTFChars(env, type, NULL);
-    if (c_type == NULL) {
-        (*env)->ReleaseStringUTFChars(env, sdp, c_sdp);
-        THROW_FAILED_GET_STR(env, type);
-        return EXCEPTION_THROWN;
+    const char* c_type = NULL;
+    if (type != NULL) {
+        c_type = (*env)->GetStringUTFChars(env, type, NULL);
+        if (c_type == NULL) {
+            (*env)->ReleaseStringUTFChars(env, sdp, c_sdp);
+            THROW_FAILED_GET_STR(env, type);
+            return EXCEPTION_THROWN;
+        }
     }
     int result = WRAP_ERROR(env, rtcSetRemoteDescription(peerHandle, c_sdp, c_type));
     (*env)->ReleaseStringUTFChars(env, sdp, c_sdp);
-    (*env)->ReleaseStringUTFChars(env, type, c_type);
+    if (c_type != NULL) {
+        (*env)->ReleaseStringUTFChars(env, type, c_type);
+    }
     return result;
 }
 
