@@ -82,7 +82,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
             if (config.iceServers == NULL || serverStrings == NULL) {
                 free(config.iceServers);
                 free(serverStrings);
-                throw_native_exception(env, "Failed to allocate for ice servers!");
+                THROW_FAILED_MALLOC(env, config.iceServers);
                 return EXCEPTION_THROWN;
             }
 
@@ -97,7 +97,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
                     }
                     free(config.iceServers);
                     free(serverStrings);
-                    throw_native_exception(env, "iceServers must not contain null values");
+                    throw_native_exception(env, "Failed to get string from iceServers array!");
                     return EXCEPTION_THROWN;
                 }
                 config.iceServers[i] = (*env)->GetStringUTFChars(env, serverStrings[i], NULL);
@@ -113,6 +113,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
                     }
                     free(config.iceServers);
                     free(serverStrings);
+                    THROW_FAILED_GET_STR(env, serverStrings);
                     return EXCEPTION_THROWN;
                 }
             }
@@ -130,6 +131,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
                 free(config.iceServers);
                 free(serverStrings);
             }
+            THROW_FAILED_GET_STR(env, proxyServer);
             return EXCEPTION_THROWN;
         }
     }
@@ -147,6 +149,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
                 free(config.iceServers);
                 free(serverStrings);
             }
+            THROW_FAILED_GET_STR(env, bindAddress);
             return EXCEPTION_THROWN;
         }
     }
@@ -319,6 +322,7 @@ JNIEXPORT jobject JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rt
 JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_setupPeerConnectionListener(JNIEnv* env, jclass clazz, const jint peerHandle, const jobject listener) {
     struct jvm_callback* jvm_callback = allocate_callback(env, listener);
     if (jvm_callback == NULL) {
+        throw_native_exception(env, "Failed to allocate callback for PeerConnectionListener");
         return EXCEPTION_THROWN;
     }
     rtcSetUserPointer(peerHandle, jvm_callback);

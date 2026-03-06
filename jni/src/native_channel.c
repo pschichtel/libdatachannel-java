@@ -80,6 +80,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreateDataChannelEx(JNIEn
     if (label != NULL) {
         c_label = (*env)->GetStringUTFChars(env, label, NULL);
         if (c_label == NULL) {
+            THROW_FAILED_GET_STR(env, label);
             return EXCEPTION_THROWN;
         }
     }
@@ -89,6 +90,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreateDataChannelEx(JNIEn
             if (c_label != NULL) {
                 (*env)->ReleaseStringUTFChars(env, label, c_label);
             }
+            THROW_FAILED_GET_STR(env, protocol);
             return EXCEPTION_THROWN;
         }
     }
@@ -139,14 +141,17 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSe
     }
     char* buffer = (*env)->GetDirectBufferAddress(env, data);
     if (buffer == NULL) {
-        return WRAP_ERROR(env, RTC_ERR_INVALID);
+        throw_native_exception(env, "LibDataChannel allocator must return a direct ByteBuffer");
+        return EXCEPTION_THROWN;
     }
     jlong capacity = (*env)->GetDirectBufferCapacity(env, data);
     if (capacity < 0 || offset < 0 || offset > capacity) {
-        return WRAP_ERROR(env, RTC_ERR_INVALID);
+        throw_native_exception(env, "Invalid buffer capacity or offset");
+        return EXCEPTION_THROWN;
     }
     if (length >= 0 && ((jlong) offset + (jlong) length > capacity)) {
-        return WRAP_ERROR(env, RTC_ERR_TOO_SMALL);
+        throw_native_exception(env, "Invalid buffer length");
+        return EXCEPTION_THROWN;
     }
     char* buffer_offset = buffer + offset;
     return rtcSendMessage(channelHandle, buffer_offset, length);
@@ -191,11 +196,13 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcRe
     }
     char* base = (*env)->GetDirectBufferAddress(env, buffer);
     if (base == NULL) {
-        return WRAP_ERROR(env, RTC_ERR_INVALID);
+        throw_native_exception(env, "LibDataChannel allocator must return a direct ByteBuffer");
+        return EXCEPTION_THROWN;
     }
     jlong bufferCapacity = (*env)->GetDirectBufferCapacity(env, buffer);
     if (bufferCapacity < 0 || offset < 0 || capacity < 0 || offset > bufferCapacity || ((jlong) offset + (jlong) capacity > bufferCapacity)) {
-        return WRAP_ERROR(env, RTC_ERR_INVALID);
+        throw_native_exception(env, "Invalid buffer capacity, offset or length");
+        return EXCEPTION_THROWN;
     }
 
     char* data = base + offset;

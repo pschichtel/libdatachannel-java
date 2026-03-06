@@ -8,6 +8,7 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAd
     if (sdp != NULL) {
         chars = (*env)->GetStringUTFChars(env, sdp, NULL);
         if (chars == NULL) {
+            THROW_FAILED_GET_STR(env, sdp);
             return EXCEPTION_THROWN;
         }
     }
