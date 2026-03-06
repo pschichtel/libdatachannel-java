@@ -1,5 +1,5 @@
 #include "callback.hpp"
-#include "global_jvm.h"
+#include "global_jvm.hpp"
 
 jvm_callback* allocate_callback(JNIEnv* env, jobject callback) {
     const auto cb = new jvm_callback;
