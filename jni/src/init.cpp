@@ -1,5 +1,7 @@
 #include "global_jvm.hpp"
 #include "jni-c-to-java.h"
+
+#include <atomic>
 #include <jni.h>
 #include <pthread.h>
 #include <rtc/rtc.h>
@@ -8,6 +10,7 @@
 
 static JavaVM* global_JVM;
 static pthread_key_t thread_key;
+static std::atomic<bool> jvm_unloading(false);
 
 void detach_thread(void*) {
     const auto jvm = static_cast<JavaVM*>(pthread_getspecific(thread_key));
@@ -33,7 +36,7 @@ JNIEnv* get_jni_env_from_jvm(JavaVM* jvm) {
 
 JNIEnv* get_jni_env() {
     // make sure it's initialized
-    if (global_JVM == nullptr) {
+    if (global_JVM == nullptr || jvm_unloading) {
         return nullptr;
     }
     return get_jni_env_from_jvm(global_JVM);
@@ -52,6 +55,7 @@ void logger_callback(const rtcLogLevel level, const char* message) {
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved) {
     pthread_key_create(&thread_key, detach_thread);
     global_JVM = jvm;
+    jvm_unloading.store(false);
     JNIEnv* env = get_jni_env_from_jvm(jvm);
     module_OnLoad(env);
     rtcInitLogger(RTC_LOG_VERBOSE, &logger_callback);
@@ -60,6 +64,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved) {
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* jvm, void* reserved) {
+    jvm_unloading.store(true);
     rtcCleanup();
     JNIEnv* env = get_jni_env();
     module_OnUnload(env);
