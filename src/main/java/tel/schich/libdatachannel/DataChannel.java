@@ -97,7 +97,7 @@ public class DataChannel implements Closeable {
      */
     public void sendMessage(String message) {
         byte[] bytes = message.getBytes(StandardCharsets.UTF_8);
-        ByteBuffer data = ByteBuffer.allocateDirect(bytes.length + 1);
+        ByteBuffer data = LibDataChannel.allocate(bytes.length + 1);
         data.put(bytes);
         data.put((byte) 0);
         data.flip();

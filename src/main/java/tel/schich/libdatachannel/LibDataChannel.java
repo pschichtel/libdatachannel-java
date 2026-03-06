@@ -66,7 +66,7 @@ public abstract class LibDataChannel {
 
 
     @JNIAccess
-    private static ByteBuffer allocate(int size) {
+    static ByteBuffer allocate(int size) {
         if (size < 0) {
             throw new IllegalArgumentException("size must be >= 0");
         }
