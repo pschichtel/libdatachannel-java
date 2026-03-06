@@ -431,6 +431,8 @@ val githubActions by tasks.registering(DefaultTask::class) {
     val deployRefPattern = """^refs/(?:tags/v\d+\.\d+\.\d+\.\d+|heads/main)$""".toRegex()
     val ref = System.getenv("GITHUB_REF")?.ifBlank { null }?.trim()
 
+    dependsOn(tasks.check)
+
     if (ref != null && deployRefPattern.matches(ref)) {
         logger.lifecycle("Job in $ref will deploy!")
         dependsOn(mavenCentralDeploy)

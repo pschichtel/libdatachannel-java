@@ -50,7 +50,7 @@ jobs:
         echo "Classifier: ${{ matrix.classifier }}"
 
     - name: Build native library for host
-      run: ./gradlew compileNativeForHost
+      run: ./gradlew check compileNativeForHost
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v7
