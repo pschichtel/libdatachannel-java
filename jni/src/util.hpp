@@ -22,10 +22,15 @@ void throw_native_exception(JNIEnv* env, const char* msg);
 
 #define THROW_FAILED_MALLOC(env, expr) throw_native_exception(env, "failed to malloc for " #expr)
 
-#define DISPATCH_JNI(target, args...) \
-    struct jvm_callback* cb = static_cast<jvm_callback*>(ptr);    \
-    JNIEnv* env = get_jni_env();      \
-    if (env == NULL) return;          \
+#define DISPATCH_JNI(target, args...)                          \
+    if (ptr == nullptr) {                                      \
+        return;                                                \
+    }                                                          \
+    struct jvm_callback* cb = static_cast<jvm_callback*>(ptr); \
+    JNIEnv* env = get_jni_env();                               \
+    if (env == nullptr) {                                      \
+        return;                                                \
+    }                                                          \
     target(env, cb->instance, args)
 
 #define SETUP_HANDLER(peer, api, target) \
