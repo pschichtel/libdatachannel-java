@@ -344,6 +344,13 @@ dependencies {
     compileOnly(libs.jniAccessGenerator)
 
     testImplementation(files(packageNativeForHost))
+
+    testRuntimeOnly(libs.junitPlatformLauncher)
+    testImplementation(libs.junitJupiter)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 publishing.publications.withType<MavenPublication>().configureEach {

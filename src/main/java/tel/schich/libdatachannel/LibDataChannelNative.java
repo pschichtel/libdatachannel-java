@@ -14,7 +14,7 @@ class LibDataChannelNative {
     static native int rtcClosePeerConnection(int peerHandle);
     static native int rtcDeletePeerConnection(int peerHandle);
 
-    static native int rtcSetLocalDescription(int peerHandle, String type);
+    static native int rtcSetLocalDescription(int peerHandle, @Nullable String type);
     static native String rtcGetLocalDescription(int peerHandle);
     static native String rtcGetLocalDescriptionType(int peerHandle);
     static native int rtcSetRemoteDescription(int peerHandle, String sdp, @Nullable String type);

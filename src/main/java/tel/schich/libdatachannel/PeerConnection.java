@@ -211,7 +211,7 @@ public class PeerConnection implements Closeable {
      *
      * @param type (optional): type of the description ("offer", "answer", "pranswer", or "rollback") or NULL for autodetection.
      */
-    public void setLocalDescription(String type) {
+    public void setLocalDescription(@Nullable String type) {
         wrapError("rtcSetLocalDescription", rtcSetLocalDescription(peerHandle, type));
     }
 
