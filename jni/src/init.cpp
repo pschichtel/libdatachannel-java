@@ -1,4 +1,4 @@
-#include "global_jvm.h"
+#include "global_jvm.hpp"
 #include "jni-c-to-java.h"
 #include <jni.h>
 #include <pthread.h>
@@ -40,11 +40,11 @@ JNIEnv* get_jni_env() {
 }
 
 void logger_callback(const rtcLogLevel level, const char* message) {
-    if (message == NULL) {
+    if (message == nullptr) {
         return;
     }
     JNIEnv* env = get_jni_env();
-    if (env != NULL) {
+    if (env != nullptr) {
         call_tel_schich_libdatachannel_LibDataChannel_log_cstr(env, level, message);
     }
 }

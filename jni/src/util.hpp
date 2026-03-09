@@ -1,7 +1,6 @@
-#ifndef LIBDATACHANNEL_JNI_UTIL_H
-#define LIBDATACHANNEL_JNI_UTIL_H
+#pragma once
 
-#include "global_jvm.h"
+#include "global_jvm.hpp"
 #include <jni-c-to-java.h>
 #include <rtc/rtc.h>
 
@@ -24,7 +23,7 @@ void throw_native_exception(JNIEnv* env, const char* msg);
 #define THROW_FAILED_MALLOC(env, expr) throw_native_exception(env, "failed to malloc for " #expr)
 
 #define DISPATCH_JNI(target, args...) \
-    struct jvm_callback* cb = ptr;    \
+    struct jvm_callback* cb = static_cast<jvm_callback*>(ptr);    \
     JNIEnv* env = get_jni_env();      \
     if (env == NULL) return;          \
     target(env, cb->instance, args)
@@ -36,4 +35,3 @@ void throw_native_exception(JNIEnv* env, const char* msg);
     JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_##api(JNIEnv* env, jclass clazz, jint handle, jboolean set) { \
         return api(handle, set ? target : NULL);                                                                                             \
     }
-#endif//LIBDATACHANNEL_JNI_UTIL_H

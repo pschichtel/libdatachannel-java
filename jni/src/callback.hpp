@@ -1,5 +1,4 @@
-#ifndef LIBDATACHANNEL_JNI_CALLBACK_H
-#define LIBDATACHANNEL_JNI_CALLBACK_H
+#pragma once
 
 #include <jni.h>
 
@@ -12,12 +11,10 @@ struct jvm_callback {
 extern "C" {
 #endif
 
-struct jvm_callback* allocate_callback(JNIEnv* env, jobject callback);
+jvm_callback* allocate_callback(JNIEnv* env, jobject callback);
 
-void free_callback(JNIEnv* env, const struct jvm_callback* callback);
+void free_callback(JNIEnv* env, const jvm_callback* callback);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif//LIBDATACHANNEL_JNI_CALLBACK_H

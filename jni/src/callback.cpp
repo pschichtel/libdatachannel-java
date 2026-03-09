@@ -1,20 +1,23 @@
-#include "callback.h"
-#include "global_jvm.h"
-#include "util.h"
-#include <stdlib.h>
+#include "callback.hpp"
+#include "global_jvm.hpp"
+#include <new>
 
-struct jvm_callback* allocate_callback(JNIEnv* env, jobject callback) {
-    struct jvm_callback* cb = malloc(sizeof(struct jvm_callback));
-    if (cb == NULL) {
-        THROW_FAILED_MALLOC(env, cb);
-        return NULL;
+jvm_callback* allocate_callback(JNIEnv* env, jobject callback) {
+    try {
+        const auto cb = new jvm_callback;
+        env->GetJavaVM(&cb->vm);
+        cb->instance = env->NewGlobalRef(callback);
+        if (cb->instance == nullptr) {
+            delete cb;
+            return nullptr;
+        }
+        return cb;
+    } catch (std::bad_alloc&) {
+        return nullptr;
     }
-    (*env)->GetJavaVM(env, &cb->vm);
-    cb->instance = (*env)->NewGlobalRef(env, callback);
-    return cb;
 }
 
-void free_callback(JNIEnv* env, struct jvm_callback* callback) {
-    (*env)->DeleteGlobalRef(env, callback->instance);
-    free(callback);
+void free_callback(JNIEnv* env, const jvm_callback* callback) {
+    env->DeleteGlobalRef(callback->instance);
+    delete callback;
 }

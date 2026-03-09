@@ -3,23 +3,30 @@
 #include <jni.h>
 #include <rtc/rtc.h>
 
-JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAddTrack(JNIEnv* env, jclass clazz, const jint peerHandle, const jstring sdp) {
-    const char* chars = NULL;
-    if (sdp != NULL) {
-        chars = (*env)->GetStringUTFChars(env, sdp, NULL);
+JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAddTrack(JNIEnv* env, jclass clazz, const jint peerHandle, jstring sdp) {
+    const char* chars = nullptr;
+    if (sdp != nullptr) {
+        chars = env->GetStringUTFChars(sdp, nullptr);
     }
     const int result = rtcAddTrack(peerHandle, chars);
     rtcSetUserPointer(result, rtcGetUserPointer(peerHandle));
-    if (sdp != NULL) {
-        (*env)->ReleaseStringUTFChars(env, sdp, chars);
+    if (sdp != nullptr) {
+        env->ReleaseStringUTFChars(sdp, chars);
     }
     return result;
 }
 
-JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAddTrackEx(JNIEnv* env, jclass clazz, jint peerHandle, jint direction, jint codec) {
+JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAddTrackEx(JNIEnv* env, jclass clazz, const jint peerHandle, jint direction, jint codec) {
     const rtcTrackInit init = {
-            .direction = direction,
-            .codec = codec,
+            .direction = static_cast<rtcDirection>(direction),
+            .codec = static_cast<rtcCodec>(codec),
+            .payloadType = 0,
+            .ssrc = 0,
+            .mid = nullptr,
+            .name = nullptr,
+            .msid = nullptr,
+            .trackId = nullptr,
+            .profile = nullptr,
     };
     return rtcAddTrackEx(peerHandle, &init);
 }

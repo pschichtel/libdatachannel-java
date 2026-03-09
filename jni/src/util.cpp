@@ -1,19 +1,19 @@
 #include "util.hpp"
-#include <errno.h>
+#include <cerrno>
 #include <jni-c-to-java.h>
 #include <jni-java-to-c.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 jstring get_dynamic_string(JNIEnv* env, const char* func_name, const get_dynamic_string_func func, const int handle) {
-    const int size = wrap_error(env, "", func(handle, NULL, -1));
-    char* memory = malloc(size);
-    if (memory == NULL) {
+    const int size = wrap_error(env, "", func(handle, nullptr, -1));
+    const auto memory = static_cast<char*>(malloc(size));
+    if (memory == nullptr) {
         throw_native_exception(env, "Failed to allocate memory for string");
-        return NULL;
+        return nullptr;
     }
     wrap_error(env, func_name, func(handle, memory, size));
-    const jstring result = (*env)->NewStringUTF(env, memory);
+    jstring result = env->NewStringUTF(memory);
     free(memory);
     return result;
 }
@@ -52,6 +52,6 @@ void throw_native_exception(JNIEnv* env, const char* msg) {
 }
 
 JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannel_freeMemory(JNIEnv* env, jclass clazz, const jlong address) {
-    void* ptr = (void*) (intptr_t) address;
+    const auto ptr = reinterpret_cast<void*>(static_cast<intptr_t>(address));
     free(ptr);
 }
