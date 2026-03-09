@@ -8,8 +8,16 @@ struct jvm_callback {
     jobject instance;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct jvm_callback* allocate_callback(JNIEnv* env, jobject callback);
 
-void free_callback(JNIEnv* env, struct jvm_callback* callback);
+void free_callback(JNIEnv* env, const struct jvm_callback* callback);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//LIBDATACHANNEL_JNI_CALLBACK_H

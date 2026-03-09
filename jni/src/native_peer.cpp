@@ -1,5 +1,5 @@
-#include "callback.h"
-#include "util.h"
+#include "callback.hpp"
+#include "util.hpp"
 #include <jni-c-to-java.h>
 #include <jni-java-to-c.h>
 #include <jni.h>

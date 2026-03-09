@@ -9,32 +9,32 @@
 static JavaVM* global_JVM;
 static pthread_key_t thread_key;
 
-void detach_thread() {
-    JavaVM* jvm = pthread_getspecific(thread_key);
-    if (jvm != NULL) {
-        (*jvm)->DetachCurrentThread(jvm);
+void detach_thread(void*) {
+    const auto jvm = static_cast<JavaVM*>(pthread_getspecific(thread_key));
+    if (jvm != nullptr) {
+        jvm->DetachCurrentThread();
     }
 }
 
 JNIEnv* get_jni_env_from_jvm(JavaVM* jvm) {
     JNIEnv* env;
-    jint result = (*jvm)->GetEnv(jvm, (void**) &env, JNI_VERSION);
+    jint result = jvm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION);
     if (result == JNI_EDETACHED) {
-        result = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void**) &env, NULL);
+        result = jvm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr);
         if (result == JNI_OK) {
             pthread_setspecific(thread_key, jvm);
         }
     }
     if (result != JNI_OK) {
-        return NULL;
+        return nullptr;
     }
     return env;
 }
 
 JNIEnv* get_jni_env() {
     // make sure it's initialized
-    if (global_JVM == NULL) {
-        return NULL;
+    if (global_JVM == nullptr) {
+        return nullptr;
     }
     return get_jni_env_from_jvm(global_JVM);
 }
@@ -63,5 +63,5 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* jvm, void* reserved) {
     rtcCleanup();
     JNIEnv* env = get_jni_env();
     module_OnUnload(env);
-    global_JVM = NULL;
+    global_JVM = nullptr;
 }
