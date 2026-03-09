@@ -1,5 +1,6 @@
 package tel.schich.libdatachannel;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
@@ -38,6 +39,7 @@ class PeerConnectionTest {
             final String peerApiSdp = peer.localDescription();
             final String callbackSdp = queue.poll(1, TimeUnit.SECONDS);
 
+            assertNotNull(callbackSdp);
             assertFalse(callbackSdp.isBlank());
             assertFalse(peerApiSdp.isBlank());
         }

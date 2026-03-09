@@ -154,12 +154,17 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcDeletePeerConnection(JNIE
 
 
 JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSetLocalDescription(JNIEnv* env, jclass clazz, const jint peerHandle, jstring type) {
-    const char* c_type = env->GetStringUTFChars(type, nullptr);
-    if (c_type == nullptr) {
-        THROW_FAILED_GET_STR(env, type);
-        return EXCEPTION_THROWN;
+    const char* c_type;
+    if (type == nullptr) {
+        c_type = nullptr;
+    } else {
+        c_type = env->GetStringUTFChars(type, nullptr);
+        if (c_type == nullptr) {
+            THROW_FAILED_GET_STR(env, type);
+            return EXCEPTION_THROWN;
+        }
     }
-    int result = WRAP_ERROR(env, rtcSetLocalDescription(peerHandle, c_type));
+    const int result = WRAP_ERROR(env, rtcSetLocalDescription(peerHandle, c_type));
     env->ReleaseStringUTFChars(type, c_type);
     return result;
 }
