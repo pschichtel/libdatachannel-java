@@ -10,6 +10,8 @@ option(ENABLE_HARDENING "Enable compiler/linker hardening flags" ON)
 set(NO_WEBSOCKET ON CACHE BOOL "configure libdatachannel build")
 set(NO_TESTS ON CACHE BOOL "configure libdatachannel build")
 set(NO_EXAMPLES ON CACHE BOOL "configure libdatachannel build")
+# TODO remove after libdatachannel updates to libsrtp 2.8.0+
+set(ENABLE_WARNINGS_AS_ERRORS OFF CACHE BOOL "Disable warnings as errors for libsrtp" FORCE)
 add_subdirectory(libdatachannel)
 
 include_directories(libdatachannel/include generated)
