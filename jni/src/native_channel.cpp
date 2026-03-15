@@ -147,26 +147,22 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSe
 
 JNIEXPORT jobject JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcReceiveMessage(JNIEnv* env, jclass clazz, const jint channelHandle) {
     int size = 0;
-    WRAP_ERROR(env, rtcReceiveMessage(channelHandle, nullptr, &size));
+    if (WRAP_ERROR(env, rtcReceiveMessage(channelHandle, nullptr, &size)) == EXCEPTION_THROWN) {
+        return nullptr;
+    }
     if (size == 0) {
         return nullptr;
     }
-    char* buffer = static_cast<char*>(malloc(size));
+    auto buffer = static_cast<char*>(malloc(size));
     if (buffer == nullptr) {
         throw_native_exception(env, "Failed to allocate memory for message");
         return nullptr;
     }
-    int result = rtcReceiveMessage(channelHandle, buffer, &size);
-    if (result == RTC_ERR_NOT_AVAIL) {
+    const int result = WRAP_ERROR(env, rtcReceiveMessage(channelHandle, buffer, &size));
+    if (result == EXCEPTION_THROWN) {
         free(buffer);
         return nullptr;
     }
-    if (result < 0) {
-        free(buffer);
-        WRAP_ERROR(env, result);
-        return nullptr;
-    }
-    WRAP_ERROR(env, result);
 
     jobject byteBuffer = env->NewDirectByteBuffer(buffer, size);
     if (byteBuffer == nullptr) {
