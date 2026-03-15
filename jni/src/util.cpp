@@ -7,12 +7,18 @@
 
 jstring get_dynamic_string(JNIEnv* env, const char* func_name, const get_dynamic_string_func func, const int handle) {
     const int size = wrap_error(env, "", func(handle, nullptr, -1));
+    if (size == EXCEPTION_THROWN) {
+        return nullptr;
+    }
     const auto memory = static_cast<char*>(malloc(size));
     if (memory == nullptr) {
         throw_native_exception(env, "Failed to allocate memory for string");
         return nullptr;
     }
-    wrap_error(env, func_name, func(handle, memory, size));
+    if (wrap_error(env, func_name, func(handle, memory, size)) == EXCEPTION_THROWN) {
+        free(memory);
+        return nullptr;
+    }
     jstring result = env->NewStringUTF(memory);
     free(memory);
     return result;
