@@ -243,6 +243,7 @@ public class PeerConnection implements Closeable {
      * @param type (optional): type of the description ("offer", "answer", "pranswer", or "rollback") or NULL for autodetection.
      */
     public void setRemoteDescription(String sdp, @Nullable SessionDescriptionType type) {
+        Objects.requireNonNull(sdp, "sdp cannot be null");
         String typeString = null;
         if (type != null) {
             typeString = type.type;

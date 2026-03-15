@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 public class PeerConnectionConfiguration {
@@ -69,7 +70,13 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration withIceServers(Collection<URI> iceServers) {
-        return new PeerConnectionConfiguration(new ArrayList<>(iceServers), proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        final List<URI> newIceServers = new ArrayList<>(iceServers.size());
+        for (URI iceServer : iceServers) {
+            if (iceServer != null) {
+                newIceServers.add(iceServer);
+            }
+        }
+        return new PeerConnectionConfiguration(newIceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public List<URI> iceServers() {

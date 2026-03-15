@@ -23,8 +23,14 @@ void RTC_API handle_channel_error(const int channelHandle, const char* error, vo
 SET_CALLBACK_INTERFACE_IMPL(rtcSetErrorCallback, handle_channel_error)
 
 void RTC_API handle_channel_message(const int channelHandle, const char* message, const int size, void* ptr) {
+    if (ptr == nullptr) {
+        return;
+    }
     const auto cb = static_cast<jvm_callback*>(ptr);
     JNIEnv* env = get_jni_env();
+    if (env == nullptr) {
+        return;
+    }
     if (size < 0) {
         jstring text = env->NewStringUTF(message);
         call_tel_schich_libdatachannel_PeerConnectionListener_onChannelTextMessage(env, cb->instance, channelHandle, text);

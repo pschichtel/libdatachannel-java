@@ -86,7 +86,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
             if (config.iceServers == nullptr || serverStrings == nullptr) {
                 free(config.iceServers);
                 free(serverStrings);
-                throw_native_exception(env, "Failed to allocate for ice servers!");
+                THROW_FAILED_MALLOC(env, config.iceServers);
                 return EXCEPTION_THROWN;
             }
 
@@ -183,15 +183,22 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSe
         THROW_FAILED_GET_STR(env, sdp);
         return EXCEPTION_THROWN;
     }
-    const char* c_type = env->GetStringUTFChars(type, nullptr);
-    if (c_type == nullptr) {
-        env->ReleaseStringUTFChars(sdp, c_sdp);
-        THROW_FAILED_GET_STR(env, type);
-        return EXCEPTION_THROWN;
+    const char* c_type;
+    if (type == nullptr) {
+        c_type = nullptr;
+    } else {
+        c_type = env->GetStringUTFChars(type, nullptr);
+        if (c_type == nullptr) {
+            env->ReleaseStringUTFChars(sdp, c_sdp);
+            THROW_FAILED_GET_STR(env, type);
+            return EXCEPTION_THROWN;
+        }
     }
     const int result = WRAP_ERROR(env, rtcSetRemoteDescription(peerHandle, c_sdp, c_type));
     env->ReleaseStringUTFChars(sdp, c_sdp);
-    env->ReleaseStringUTFChars(type, c_type);
+    if (c_type != nullptr) {
+        env->ReleaseStringUTFChars(type, c_type);
+    }
     return result;
 }
 
