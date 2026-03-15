@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
 project(libdatachannel_jni C CXX)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 option(PROJECT_VERSION "The version of the project" "unspecified")
 option(ENABLE_HARDENING "Enable compiler/linker hardening flags" ON)
