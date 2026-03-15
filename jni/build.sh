@@ -27,6 +27,7 @@ cmake_options=(
   "-DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=${MOUNT_SOURCE}/jni/cmake-conan/conan_provider.cmake"
   "-DPROJECT_VERSION=${PROJECT_VERSION}"
   "-DCMAKE_BUILD_TYPE=${PROJECT_BUILD_TYPE}"
+  "-DENABLE_HARDENING=${ENABLE_HARDENING:-ON}"
 )
 
 if [ "$TARGET_FAMILY" = 'android' ]
