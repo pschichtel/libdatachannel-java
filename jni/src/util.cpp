@@ -4,7 +4,6 @@
 #include <cstring>
 #include <jni-c-to-java.h>
 #include <jni-java-to-c.h>
-#include <stdexcept>
 #include <string>
 
 jstring get_dynamic_string(JNIEnv* env, const char* func_name, const get_dynamic_string_func func, const int handle) {
@@ -72,14 +71,4 @@ std::string util::getJavaString(JNIEnv* env, jstring s) {
     const auto server = std::string(chars);
     env->ReleaseStringUTFChars(s, chars);
     return server;
-}
-
-template <typename F> void util::wrap(JNIEnv* env, F func) {
-    try {
-        func();
-    } catch (const std::invalid_argument &e) {
-        throw_tel_schich_libdatachannel_exception_InvalidException_cstr(env, e.what());
-    } catch (const std::exception &e) {
-        throw_tel_schich_libdatachannel_exception_InvalidException_cstr(env, e.what());
-    }
 }

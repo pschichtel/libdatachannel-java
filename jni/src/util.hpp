@@ -3,6 +3,7 @@
 #include "global_jvm.hpp"
 #include <jni-c-to-java.h>
 #include <rtc/rtc.h>
+#include <stdexcept>
 #include <string>
 
 #define EXCEPTION_THROWN (-999)
@@ -44,5 +45,14 @@ void throw_native_exception(JNIEnv* env, const char* msg);
 
 namespace util {
     std::string getJavaString(JNIEnv* env, jstring s);
-    template <typename F> void wrap(JNIEnv* env, F func);
+
+    template <typename F> void wrap(JNIEnv* env, F func) {
+        try {
+            func();
+        } catch (const std::invalid_argument &e) {
+            throw_tel_schich_libdatachannel_exception_InvalidException_cstr(env, e.what());
+        } catch (const std::exception &e) {
+            throw_tel_schich_libdatachannel_exception_InvalidException_cstr(env, e.what());
+        }
+    }
 }
