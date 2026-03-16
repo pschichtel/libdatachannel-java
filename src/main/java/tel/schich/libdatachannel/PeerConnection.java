@@ -33,10 +33,8 @@ import static tel.schich.libdatachannel.LibDataChannelNative.rtcSetTrackCallback
 import static tel.schich.libdatachannel.LibDataChannelNative.setupPeerConnectionListener;
 import static tel.schich.libdatachannel.Util.parseAddress;
 import static tel.schich.libdatachannel.Util.wrapError;
-import static tel.schich.libdatachannel.exception.LibDataChannelException.ERR_INVALID;
 
 import java.io.Closeable;
-import java.lang.ref.Cleaner;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
@@ -49,11 +47,10 @@ import java.util.concurrent.Executor;
 public class PeerConnection implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(PeerConnection.class);
 
-    final int peerHandle;
+    final long peerHandle;
     private final Executor executor;
     private final ConcurrentMap<Integer, DataChannel> channels;
     private final ConcurrentMap<Integer, Track> tracks;
-    private final Cleaner.Cleanable cleanable;
     final PeerConnectionListener listener;
 
     public final EventListenerContainer<PeerConnectionCallback.LocalDescription> onLocalDescription;
@@ -65,7 +62,7 @@ public class PeerConnection implements Closeable {
     public final EventListenerContainer<PeerConnectionCallback.DataChannel> onDataChannel;
     public final EventListenerContainer<PeerConnectionCallback.Track> onTrack;
 
-    private PeerConnection(int peerHandle, final Executor executor) {
+    private PeerConnection(long peerHandle, final Executor executor) {
         this.peerHandle = peerHandle;
         this.executor = executor;
         this.channels = new ConcurrentHashMap<>();
@@ -81,11 +78,9 @@ public class PeerConnection implements Closeable {
         this.onDataChannel = new EventListenerContainer<>("DataChannel", set -> rtcSetDataChannelCallback(peerHandle, set), executor);
         this.onTrack = new EventListenerContainer<>("Track", set -> rtcSetTrackCallback(peerHandle, set), executor);
 
-        this.cleanable = LibDataChannel.CLEANER.register(this, () -> {
+        LibDataChannel.CLEANER.register(this, () -> {
             // make sure not to capture this here, that would be a memory leak
-            if (rtcClosePeerConnection(peerHandle) != ERR_INVALID) {
-                rtcDeletePeerConnection(peerHandle);
-            }
+            rtcDeletePeerConnection(peerHandle);
         });
     }
 
@@ -119,7 +114,7 @@ public class PeerConnection implements Closeable {
         if (config.bindAddress != null) {
             bindAddress = config.bindAddress.toString();
         }
-        int result = rtcCreatePeerConnection(
+        long result = rtcCreatePeerConnection(
                 iceUrisToStrings(config.iceServers),
                 proxyServer,
                 bindAddress,
@@ -134,7 +129,7 @@ public class PeerConnection implements Closeable {
                 config.mtu,
                 config.maxMessageSize);
 
-        final PeerConnection peer = new PeerConnection(wrapError("rtcCreatePeerConnection", result), executor);
+        final PeerConnection peer = new PeerConnection(result, executor);
         setupPeerConnectionListener(peer.peerHandle, peer.listener);
 
         return peer;
@@ -177,7 +172,7 @@ public class PeerConnection implements Closeable {
         } catch (Exception e) {
             LOGGER.warn("Failed to close channels of peer connection", e);
         }
-        cleanable.clean();
+        rtcClosePeerConnection(peerHandle);
         onLocalDescription.close();
         onLocalCandidate.close();
         onStateChange.close();
@@ -212,7 +207,7 @@ public class PeerConnection implements Closeable {
      * @param type (optional): type of the description ("offer", "answer", "pranswer", or "rollback") or NULL for autodetection.
      */
     public void setLocalDescription(@Nullable String type) {
-        wrapError("rtcSetLocalDescription", rtcSetLocalDescription(peerHandle, type));
+        rtcSetLocalDescription(peerHandle, type);
     }
 
     /**
@@ -248,7 +243,7 @@ public class PeerConnection implements Closeable {
         if (type != null) {
             typeString = type.type;
         }
-        wrapError("rtcSetRemoteDescription", rtcSetRemoteDescription(peerHandle, sdp, typeString));
+        rtcSetRemoteDescription(peerHandle, sdp, typeString);
     }
 
     /**
@@ -290,7 +285,7 @@ public class PeerConnection implements Closeable {
      *                  autodetection
      */
     public void addRemoteCandidate(String candidate, @Nullable String mediaId) {
-        wrapError("rtcAddRemoteCandidate", rtcAddRemoteCandidate(peerHandle, candidate, mediaId));
+        rtcAddRemoteCandidate(peerHandle, candidate, mediaId);
     }
 
     /**

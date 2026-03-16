@@ -1,9 +1,11 @@
 #include "util.hpp"
 #include <cerrno>
-#include <jni-c-to-java.h>
-#include <jni-java-to-c.h>
 #include <cstdlib>
 #include <cstring>
+#include <jni-c-to-java.h>
+#include <jni-java-to-c.h>
+#include <stdexcept>
+#include <string>
 
 jstring get_dynamic_string(JNIEnv* env, const char* func_name, const get_dynamic_string_func func, const int handle) {
     const int size = wrap_error(env, "", func(handle, nullptr, -1));
@@ -60,4 +62,24 @@ void throw_native_exception(JNIEnv* env, const char* msg) {
 JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannel_freeMemory(JNIEnv* env, jclass clazz, const jlong address) {
     const auto ptr = reinterpret_cast<void*>(static_cast<intptr_t>(address));
     free(ptr);
+}
+
+std::string util::getJavaString(JNIEnv* env, jstring s) {
+    if (s == nullptr) {
+        return "";
+    }
+    const auto chars = env->GetStringUTFChars(s, nullptr);
+    const auto server = std::string(chars);
+    env->ReleaseStringUTFChars(s, chars);
+    return server;
+}
+
+template <typename F> void util::wrap(JNIEnv* env, F func) {
+    try {
+        func();
+    } catch (const std::invalid_argument &e) {
+        throw_tel_schich_libdatachannel_exception_InvalidException_cstr(env, e.what());
+    } catch (const std::exception &e) {
+        throw_tel_schich_libdatachannel_exception_InvalidException_cstr(env, e.what());
+    }
 }

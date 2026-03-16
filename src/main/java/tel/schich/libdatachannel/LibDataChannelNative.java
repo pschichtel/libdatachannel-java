@@ -9,40 +9,40 @@ class LibDataChannelNative {
         LibDataChannel.initialize();
     }
 
-    static native int rtcCreatePeerConnection(String @Nullable [] iceServers, @Nullable String proxyServer, @Nullable String bindAddress, int certificateType, int iceTransportPolicy, boolean enableIceTcp, boolean enableIceUdpMux, boolean disableAutoNegotiation, boolean forceMediaTransport, short portRangeBegin, short portRangeEnd, int mtu, int maxMessageSize);
-    static native int setupPeerConnectionListener(int peerHandle, PeerConnectionListener listener);
-    static native int rtcClosePeerConnection(int peerHandle);
-    static native int rtcDeletePeerConnection(int peerHandle);
+    static native long rtcCreatePeerConnection(String @Nullable [] iceServers, @Nullable String proxyServer, @Nullable String bindAddress, int certificateType, int iceTransportPolicy, boolean enableIceTcp, boolean enableIceUdpMux, boolean disableAutoNegotiation, boolean forceMediaTransport, short portRangeBegin, short portRangeEnd, int mtu, int maxMessageSize);
+    static native int setupPeerConnectionListener(long peerHandle, PeerConnectionListener listener);
+    static native int rtcClosePeerConnection(long peerHandle);
+    static native void rtcDeletePeerConnection(long peerHandle);
 
-    static native int rtcSetLocalDescription(int peerHandle, @Nullable String type);
-    static native String rtcGetLocalDescription(int peerHandle);
-    static native String rtcGetLocalDescriptionType(int peerHandle);
-    static native int rtcSetRemoteDescription(int peerHandle, String sdp, @Nullable String type);
-    static native String rtcGetRemoteDescription(int peerHandle);
-    static native String rtcGetRemoteDescriptionType(int peerHandle);
-    static native int rtcAddRemoteCandidate(int peerHandle, String candidate, @Nullable String mediaId);
-    static native String rtcGetLocalAddress(int peerHandle);
-    static native String rtcGetRemoteAddress(int peerHandle);
-    static native CandidatePair rtcGetSelectedCandidatePair(int peerHandle);
-    static native int rtcSetLocalDescriptionCallback(int peerHandle, boolean set);
-    static native int rtcSetLocalCandidateCallback(int peerHandle, boolean set);
-    static native int rtcSetStateChangeCallback(int peerHandle, boolean set);
-    static native int rtcSetIceStateChangeCallback(int peerHandle, boolean set);
-    static native int rtcSetGatheringStateChangeCallback(int peerHandle, boolean set);
-    static native int rtcSetSignalingStateChangeCallback(int peerHandle, boolean set);
-    static native int rtcSetDataChannelCallback(int peerHandle, boolean set);
-    static native int rtcSetTrackCallback(int peerHandle, boolean set);
+    static native void rtcSetLocalDescription(long peerHandle, @Nullable String type);
+    static native String rtcGetLocalDescription(long peerHandle);
+    static native String rtcGetLocalDescriptionType(long peerHandle);
+    static native void rtcSetRemoteDescription(long peerHandle, String sdp, @Nullable String type);
+    static native String rtcGetRemoteDescription(long peerHandle);
+    static native String rtcGetRemoteDescriptionType(long peerHandle);
+    static native void rtcAddRemoteCandidate(long peerHandle, String candidate, @Nullable String mediaId);
+    static native String rtcGetLocalAddress(long peerHandle);
+    static native String rtcGetRemoteAddress(long peerHandle);
+    static native CandidatePair rtcGetSelectedCandidatePair(long peerHandle);
+    static native int rtcSetLocalDescriptionCallback(long peerHandle, boolean set);
+    static native int rtcSetLocalCandidateCallback(long peerHandle, boolean set);
+    static native int rtcSetStateChangeCallback(long peerHandle, boolean set);
+    static native int rtcSetIceStateChangeCallback(long peerHandle, boolean set);
+    static native int rtcSetGatheringStateChangeCallback(long peerHandle, boolean set);
+    static native int rtcSetSignalingStateChangeCallback(long peerHandle, boolean set);
+    static native int rtcSetDataChannelCallback(long peerHandle, boolean set);
+    static native int rtcSetTrackCallback(long peerHandle, boolean set);
 
-    static native int rtcAddTrack(int peerHandle, String sdp);
-    static native int rtcAddTrackEx(int peerHandle, int direction, int codec);
+    static native int rtcAddTrack(long peerHandle, String sdp);
+    static native int rtcAddTrackEx(long peerHandle, int direction, int codec);
     static native String rtcGetTrackDescription(int trackHandle);
     static native int rtcGetTrackDirection(int trackHandle);
     static native String rtcGetTrackMid(int trackHandle);
     static native int rtcDeleteTrack(int trackHandle);
 
-    static native int rtcGetMaxDataChannelStream(int peerHandle);
-    static native int rtcGetRemoteMaxMessageSize(int peerHandle);
-    static native int rtcCreateDataChannelEx(int peerHandle, String label, boolean unordered, boolean unreliable, long maxPacketLifeTime, int maxRetransmits, @Nullable String protocol, boolean negotiated, int stream, boolean manualStream);
+    static native int rtcGetMaxDataChannelStream(long peerHandle);
+    static native int rtcGetRemoteMaxMessageSize(long peerHandle);
+    static native int rtcCreateDataChannelEx(long peerHandle, String label, boolean unordered, boolean unreliable, long maxPacketLifeTime, int maxRetransmits, @Nullable String protocol, boolean negotiated, int stream, boolean manualStream);
     static native int rtcClose(int channelHandle);
     static native int rtcDeleteDataChannel(int channelHandle);
     static native boolean rtcIsClosed(int channelHandle);

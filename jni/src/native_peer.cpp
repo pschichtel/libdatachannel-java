@@ -1,10 +1,13 @@
 #include "callback.hpp"
+#include "rtc/peerconnection.hpp"
 #include "util.hpp"
+
+#include <cstdlib>
 #include <jni-c-to-java.h>
 #include <jni-java-to-c.h>
 #include <jni.h>
+#include <memory>
 #include <rtc/rtc.h>
-#include <cstdlib>
 
 void RTC_API handle_local_description(int pc, const char* sdp, const char* type, void* ptr) {
     DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onLocalDescription_cstr, sdp, type);
@@ -48,7 +51,7 @@ void RTC_API handle_track(int pc, const int trackHandle, void* ptr) {
 }
 SET_CALLBACK_INTERFACE_IMPL(rtcSetTrackCallback, handle_track)
 
-JNIEXPORT jint JNICALL
+JNIEXPORT jlong JNICALL
 Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIEnv* env, jclass clazz,
                                                                             jobjectArray iceServers, jstring proxyServer,
                                                                             jstring bindAddress, const jint certificateType,
@@ -59,114 +62,72 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
                                                                             const jboolean forceMediaTransport,
                                                                             const jshort portRangeBegin, const jshort portRangeEnd,
                                                                             const jint mtu, const jint maxMessageSize) {
-    rtcConfiguration config = {
-            .iceServers = nullptr,
-            .iceServersCount = 0,
-            .proxyServer = nullptr,
-            .bindAddress = nullptr,
-            .certificateType = static_cast<rtcCertificateType>(certificateType),
-            .iceTransportPolicy = static_cast<rtcTransportPolicy>(iceTransportPolicy),
-            .enableIceTcp = static_cast<bool>(enableIceTcp),
-            .enableIceUdpMux = static_cast<bool>(enableIceUdpMux),
-            .disableAutoNegotiation = static_cast<bool>(disableAutoNegotiation),
-            .forceMediaTransport = static_cast<bool>(forceMediaTransport),
-            .portRangeBegin = static_cast<uint16_t>(portRangeBegin),
-            .portRangeEnd = static_cast<uint16_t>(portRangeEnd),
-            .mtu = mtu,
-            .maxMessageSize = maxMessageSize,
-    };
-
-    jstring* serverStrings = nullptr;
-
+    rtc::Configuration c;
     if (iceServers != nullptr) {
-        config.iceServersCount = env->GetArrayLength(iceServers);
-        if (config.iceServersCount > 0) {
-            config.iceServers = static_cast<const char**>(malloc(sizeof(char*) * config.iceServersCount));
-            serverStrings = static_cast<jstring*>(malloc(sizeof(jstring) * config.iceServersCount));
-            if (config.iceServers == nullptr || serverStrings == nullptr) {
-                free(config.iceServers);
-                free(serverStrings);
-                THROW_FAILED_MALLOC(env, config.iceServers);
-                return EXCEPTION_THROWN;
-            }
+        const int serverCount = env->GetArrayLength(iceServers);
 
-            for (int i = 0; i < config.iceServersCount; i++) {
-                serverStrings[i] = reinterpret_cast<jstring>(env->GetObjectArrayElement(iceServers, i));// we need a reference to release later
-                config.iceServers[i] = env->GetStringUTFChars(serverStrings[i], nullptr);
-                if (config.iceServers[i] == nullptr) {
-                    // release everything and throw an exception
-                    for (int j = 0; j < i; j++) {
-                        env->ReleaseStringUTFChars(serverStrings[j], config.iceServers[j]);
-                    }
-                    free(config.iceServers);
-                    free(serverStrings);
-                    throw_native_exception(env, "Failed to get ice server string!");
-                    return EXCEPTION_THROWN;
-                }
-            }
+        for (int i = 0; i < serverCount; i++) {
+            const auto server = reinterpret_cast<jstring>(env->GetObjectArrayElement(iceServers, i));
+            c.iceServers.emplace_back(util::getJavaString(env, server));
         }
     }
 
     if (proxyServer != nullptr) {
-        config.proxyServer = env->GetStringUTFChars(proxyServer, nullptr);
+        c.proxyServer.emplace(util::getJavaString(env, proxyServer));
     }
     if (bindAddress != nullptr) {
-        config.bindAddress = env->GetStringUTFChars(bindAddress, nullptr);
+        c.bindAddress = util::getJavaString(env, bindAddress);
     }
 
-    const jint result = (jint) rtcCreatePeerConnection(&config);
-
-    if (proxyServer != nullptr) {
-        env->ReleaseStringUTFChars(proxyServer, config.proxyServer);
-    }
-    if (bindAddress != nullptr) {
-        env->ReleaseStringUTFChars(bindAddress, config.bindAddress);
+    if (portRangeBegin > 0 || portRangeEnd > 0) {
+        c.portRangeBegin = portRangeBegin;
+        c.portRangeEnd = portRangeEnd;
     }
 
-    if (config.iceServers != nullptr && config.iceServersCount > 0) {
-        if (serverStrings != nullptr) {
-            for (int i = 0; i < config.iceServersCount; i++) {
-                env->ReleaseStringUTFChars(serverStrings[i], config.iceServers[i]);
-            }
-        }
-        free(config.iceServers);
-        free(serverStrings);
+    c.certificateType = static_cast<rtc::CertificateType>(certificateType);
+    c.iceTransportPolicy = static_cast<rtc::TransportPolicy>(iceTransportPolicy);
+    c.enableIceTcp = enableIceTcp;
+    c.enableIceUdpMux = enableIceUdpMux;
+    c.disableAutoNegotiation = disableAutoNegotiation;
+    c.forceMediaTransport = forceMediaTransport;
+
+    if (mtu > 0) {
+        c.mtu = mtu;
     }
 
-    return result;
+    if (maxMessageSize) {
+        c.maxMessageSize = static_cast<size_t>(maxMessageSize);
+    }
+
+    const auto peerConnection = std::make_shared<rtc::PeerConnection>(std::move(c));
+    return reinterpret_cast<jlong>(new std::shared_ptr(peerConnection));
 }
 
-JNIEXPORT jint JNICALL
+JNIEXPORT void JNICALL
 Java_tel_schich_libdatachannel_LibDataChannelNative_rtcClosePeerConnection(JNIEnv* env, jclass clazz, const jint peerHandle) {
-    return rtcClosePeerConnection(peerHandle);
+    const auto persistentPtr = reinterpret_cast<std::shared_ptr<rtc::PeerConnection>*>(peerHandle);
+    util::wrap(env, [persistentPtr] {
+        persistentPtr->get()->close();
+    });
 }
 
-JNIEXPORT jint JNICALL
+JNIEXPORT void JNICALL
 Java_tel_schich_libdatachannel_LibDataChannelNative_rtcDeletePeerConnection(JNIEnv* env, jclass clazz,
                                                                             const jint peerHandle) {
-    const auto* callback = static_cast<jvm_callback*>(rtcGetUserPointer(peerHandle));
-    if (callback != nullptr) {
-        free_callback(env, callback);
-    }
-
-    return rtcDeletePeerConnection(peerHandle);
+    const auto persistentPtr = reinterpret_cast<std::shared_ptr<rtc::PeerConnection>*>(peerHandle);
+    delete persistentPtr;
 }
 
 
-JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSetLocalDescription(JNIEnv* env, jclass clazz, const jint peerHandle, jstring type) {
-    const char* c_type;
-    if (type == nullptr) {
-        c_type = nullptr;
-    } else {
-        c_type = env->GetStringUTFChars(type, nullptr);
-        if (c_type == nullptr) {
-            THROW_FAILED_GET_STR(env, type);
-            return EXCEPTION_THROWN;
-        }
-    }
-    const int result = WRAP_ERROR(env, rtcSetLocalDescription(peerHandle, c_type));
-    env->ReleaseStringUTFChars(type, c_type);
-    return result;
+JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSetLocalDescription(JNIEnv* env, jclass clazz, const jlong peerHandle, jstring type) {
+    const auto persistentPtr = reinterpret_cast<std::shared_ptr<rtc::PeerConnection>*>(peerHandle);
+    const auto sdpType = type == nullptr
+        ? rtc::Description::Type::Unspec
+        : rtc::Description::stringToType(util::getJavaString(env, type));
+
+    util::wrap(env, [persistentPtr, &sdpType] {
+        persistentPtr->get()->setLocalDescription(sdpType);
+    });
 }
 
 JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetLocalDescription(JNIEnv* env, jclass clazz, const jint peerHandle) {
@@ -177,29 +138,16 @@ JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rt
     return GET_DYNAMIC_STRING(env, rtcGetLocalDescriptionType, peerHandle);
 }
 
-JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSetRemoteDescription(JNIEnv* env, jclass clazz, const jint peerHandle, jstring sdp, jstring type) {
-    const char* c_sdp = env->GetStringUTFChars(sdp, nullptr);
-    if (c_sdp == nullptr) {
-        THROW_FAILED_GET_STR(env, sdp);
-        return EXCEPTION_THROWN;
-    }
-    const char* c_type;
-    if (type == nullptr) {
-        c_type = nullptr;
-    } else {
-        c_type = env->GetStringUTFChars(type, nullptr);
-        if (c_type == nullptr) {
-            env->ReleaseStringUTFChars(sdp, c_sdp);
-            THROW_FAILED_GET_STR(env, type);
-            return EXCEPTION_THROWN;
-        }
-    }
-    const int result = WRAP_ERROR(env, rtcSetRemoteDescription(peerHandle, c_sdp, c_type));
-    env->ReleaseStringUTFChars(sdp, c_sdp);
-    if (c_type != nullptr) {
-        env->ReleaseStringUTFChars(type, c_type);
-    }
-    return result;
+JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSetRemoteDescription(JNIEnv* env, jclass clazz, const jint peerHandle, jstring sdp, jstring type) {
+    const auto persistentPtr = reinterpret_cast<std::shared_ptr<rtc::PeerConnection>*>(peerHandle);
+    const auto sdpType = type == nullptr
+        ? rtc::Description::Type::Unspec
+        : rtc::Description::stringToType(util::getJavaString(env, type));
+    const rtc::Description description(util::getJavaString(env, sdp), sdpType);
+
+    util::wrap(env, [persistentPtr, &description] {
+        persistentPtr->get()->setRemoteDescription(description);
+    });
 }
 
 JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetRemoteDescription(JNIEnv* env, jclass clazz, const jint peerHandle) {
@@ -210,36 +158,13 @@ JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rt
     return GET_DYNAMIC_STRING(env, rtcGetRemoteDescriptionType, peerHandle);
 }
 
-JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAddRemoteCandidate(JNIEnv* env, jclass clazz, const jint peerHandle, jstring candidate, jstring mediaId) {
-    const char* c_candidate = nullptr;
-    if (candidate != nullptr) {
-        c_candidate = env->GetStringUTFChars(candidate, nullptr);
-        if (c_candidate == nullptr) {
-            THROW_FAILED_GET_STR(env, candidate);
-            return EXCEPTION_THROWN;
-        }
-    }
-    const char* c_mediaId = nullptr;
-    if (mediaId != nullptr) {
-        c_mediaId = env->GetStringUTFChars(mediaId, nullptr);
-        if (c_mediaId == nullptr) {
-            if (c_candidate != nullptr) {
-                env->ReleaseStringUTFChars(candidate, c_candidate);
-            }
-            THROW_FAILED_GET_STR(env, mediaId);
-            return EXCEPTION_THROWN;
-        }
-    }
+JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAddRemoteCandidate(JNIEnv* env, jclass clazz, const jint peerHandle, jstring candidate, jstring mediaId) {
+    const auto persistentPtr = reinterpret_cast<std::shared_ptr<rtc::PeerConnection>*>(peerHandle);
+    rtc::Candidate c(util::getJavaString(env, candidate), util::getJavaString(env, mediaId));
 
-    const int result = rtcAddRemoteCandidate(peerHandle, c_candidate, c_mediaId);
-    if (c_candidate != nullptr) {
-        env->ReleaseStringUTFChars(candidate, c_candidate);
-    }
-    if (c_mediaId != nullptr) {
-        env->ReleaseStringUTFChars(mediaId, c_mediaId);
-    }
-
-    return result;
+    util::wrap(env, [persistentPtr, &c] {
+        persistentPtr->get()->addRemoteCandidate(c);
+    });
 }
 
 JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetLocalAddress(JNIEnv* env, jclass clazz, const jint peerHandle) {
