@@ -2,7 +2,6 @@
 #include "rtc/peerconnection.hpp"
 #include "util.hpp"
 
-#include <cstdlib>
 #include <jni-c-to-java.h>
 #include <jni-java-to-c.h>
 #include <jni.h>
@@ -131,11 +130,25 @@ JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSe
 }
 
 JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetLocalDescription(JNIEnv* env, jclass clazz, const jint peerHandle) {
-    return GET_DYNAMIC_STRING(env, rtcGetLocalDescription, peerHandle);
+    const auto persistentPtr = reinterpret_cast<std::shared_ptr<rtc::PeerConnection>*>(peerHandle);
+    const auto peer_connection = persistentPtr->get();
+    return util::get_string_for_java(env, [&]() -> std::optional<std::string> {
+        if (const auto desc = peer_connection->localDescription(); desc.has_value()) {
+            return std::string(desc.value());
+        }
+        return nullptr;
+    });
 }
 
 JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetLocalDescriptionType(JNIEnv* env, jclass clazz, const jint peerHandle) {
-    return GET_DYNAMIC_STRING(env, rtcGetLocalDescriptionType, peerHandle);
+    const auto persistentPtr = reinterpret_cast<std::shared_ptr<rtc::PeerConnection>*>(peerHandle);
+    const auto peer_connection = persistentPtr->get();
+    return util::get_string_for_java(env, [&]() -> std::optional<std::string> {
+        if (const auto desc = peer_connection->localDescription(); desc.has_value()) {
+            return desc.value().typeString();
+        }
+        return nullptr;
+    });
 }
 
 JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSetRemoteDescription(JNIEnv* env, jclass clazz, const jint peerHandle, jstring sdp, jstring type) {
@@ -151,11 +164,25 @@ JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcSe
 }
 
 JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetRemoteDescription(JNIEnv* env, jclass clazz, const jint peerHandle) {
-    return GET_DYNAMIC_STRING(env, rtcGetRemoteDescription, peerHandle);
+    const auto persistentPtr = reinterpret_cast<std::shared_ptr<rtc::PeerConnection>*>(peerHandle);
+    const auto peer_connection = persistentPtr->get();
+    return util::get_string_for_java(env, [&]() -> std::optional<std::string> {
+        if (const auto desc = peer_connection->remoteDescription(); desc.has_value()) {
+            return std::string(desc.value());
+        }
+        return nullptr;
+    });
 }
 
 JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetRemoteDescriptionType(JNIEnv* env, jclass clazz, const jint peerHandle) {
-    return GET_DYNAMIC_STRING(env, rtcGetRemoteDescriptionType, peerHandle);
+    const auto persistentPtr = reinterpret_cast<std::shared_ptr<rtc::PeerConnection>*>(peerHandle);
+    const auto peer_connection = persistentPtr->get();
+    return util::get_string_for_java(env, [&]() -> std::optional<std::string> {
+        if (const auto desc = peer_connection->remoteDescription(); desc.has_value()) {
+            return desc.value().typeString();
+        }
+        return nullptr;
+    });
 }
 
 JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAddRemoteCandidate(JNIEnv* env, jclass clazz, const jint peerHandle, jstring candidate, jstring mediaId) {
@@ -168,41 +195,35 @@ JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAd
 }
 
 JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetLocalAddress(JNIEnv* env, jclass clazz, const jint peerHandle) {
-    return GET_DYNAMIC_STRING(env, rtcGetLocalAddress, peerHandle);
+    const auto persistentPtr = reinterpret_cast<std::shared_ptr<rtc::PeerConnection>*>(peerHandle);
+    const auto peer_connection = persistentPtr->get();
+    return util::get_string_for_java(env, [&] {
+        return peer_connection->localAddress();
+    });
 }
 
 JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetRemoteAddress(JNIEnv* env, jclass clazz, const jint peerHandle) {
-    return GET_DYNAMIC_STRING(env, rtcGetRemoteAddress, peerHandle);
+    const auto persistentPtr = reinterpret_cast<std::shared_ptr<rtc::PeerConnection>*>(peerHandle);
+    const auto peer_connection = persistentPtr->get();
+    return util::get_string_for_java(env, [&]() -> std::optional<std::string> {
+        return peer_connection->remoteAddress();
+    });
 }
 
 JNIEXPORT jobject JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetSelectedCandidatePair(JNIEnv* env, jclass clazz, const jint peerHandle) {
-    constexpr int bufSize = 50;
-    const auto local = static_cast<char*>(malloc(bufSize));
-    if (local == nullptr) {
-        THROW_FAILED_MALLOC(env, local);
-        return nullptr;
-    }
-    const auto remote = static_cast<char*>(malloc(bufSize));
-    if (remote == nullptr) {
-        free(local);
-        THROW_FAILED_MALLOC(env, remote);
-        return nullptr;
-    }
+    const auto persistentPtr = reinterpret_cast<std::shared_ptr<rtc::PeerConnection>*>(peerHandle);
+    const auto peer_connection = persistentPtr->get();
 
-    const int result = rtcGetSelectedCandidatePair(peerHandle, local, bufSize, remote, bufSize);
-    if (result < 0) {
-        free(local);
-        free(remote);
-        WRAP_ERROR(env, result);
-        return nullptr;
-    }
+    rtc::Candidate local;
+    rtc::Candidate remote;
+    return util::wrapResult(env, [&]() -> jobject {
+        if (!peer_connection->getSelectedCandidatePair(&local, &remote)) {
+            throw_tel_schich_libdatachannel_exception_NotAvailableException_cstr(env, "No candidate pair selected!");
+            return nullptr;
+        }
+        return call_tel_schich_libdatachannel_CandidatePair_parse_cstr(env, std::string(local).c_str(), std::string(remote).c_str());
+    });
 
-    jobject candidatePair = call_tel_schich_libdatachannel_CandidatePair_parse_cstr(env, local, remote);
-
-    free(local);
-    free(remote);
-
-    return candidatePair;
 }
 
 JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_setupPeerConnectionListener(JNIEnv* env, jclass clazz, const jint peerHandle, jobject listener) {

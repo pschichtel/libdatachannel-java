@@ -1,7 +1,10 @@
 #pragma once
 
 #include "global_jvm.hpp"
+
+#include <functional>
 #include <jni-c-to-java.h>
+#include <optional>
 #include <rtc/rtc.h>
 #include <stdexcept>
 #include <string>
@@ -46,6 +49,18 @@ void throw_native_exception(JNIEnv* env, const char* msg);
 namespace util {
     std::string getJavaString(JNIEnv* env, jstring s);
 
+    template <typename F> auto wrapResult(JNIEnv* env, F func) -> decltype(func()) {
+        try {
+            return func();
+        } catch (const std::invalid_argument &e) {
+            throw_tel_schich_libdatachannel_exception_InvalidException_cstr(env, e.what());
+            return nullptr;
+        } catch (const std::exception &e) {
+            throw_tel_schich_libdatachannel_exception_InvalidException_cstr(env, e.what());
+            return nullptr;
+        }
+    }
+
     template <typename F> void wrap(JNIEnv* env, F func) {
         try {
             func();
@@ -55,4 +70,7 @@ namespace util {
             throw_tel_schich_libdatachannel_exception_InvalidException_cstr(env, e.what());
         }
     }
-}
+
+
+    jstring get_string_for_java(JNIEnv* env, const std::function<std::optional<std::string>()>& func);
+}// namespace util
