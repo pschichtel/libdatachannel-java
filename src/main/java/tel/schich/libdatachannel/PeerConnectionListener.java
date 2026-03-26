@@ -73,13 +73,13 @@ class PeerConnectionListener {
     }
 
     @JNIAccess
-    void onDataChannel(int channelHandle) {
+    void onDataChannel(long channelHandle) {
         final DataChannel channel = peer.newChannel(channelHandle);
         peer.onDataChannel.invoke(h -> h.handleChannel(peer, channel));
     }
 
     @JNIAccess
-    void onTrack(int trackHandle) {
+    void onTrack(long trackHandle) {
         final Track state = peer.newTrack(trackHandle);
         peer.onTrack.invoke(h -> h.handleTrack(peer, state));
     }
