@@ -1,16 +1,19 @@
 #include "global_jvm.hpp"
 #include "jni-c-to-java.h"
+#include "rtc/global.hpp"
 
 #include <atomic>
+#include <chrono>
 #include <jni.h>
 #include <pthread.h>
-#include <rtc/rtc.h>
+
+using namespace std::chrono_literals;
 
 #define JNI_VERSION JNI_VERSION_1_6
 
 static JavaVM* global_JVM;
 static pthread_key_t thread_key;
-static std::atomic<bool> jvm_unloading(false);
+static std::atomic jvm_unloading(false);
 
 void detach_thread(void*) {
     const auto jvm = static_cast<JavaVM*>(pthread_getspecific(thread_key));
@@ -34,22 +37,15 @@ JNIEnv* get_jni_env_from_jvm(JavaVM* jvm) {
     return env;
 }
 
-JNIEnv* get_jni_env() {
-    // make sure it's initialized
-    if (global_JVM == nullptr || jvm_unloading) {
+JavaVM* get_jvm_from_env(JNIEnv* env) {
+    JavaVM* jvm = nullptr;
+
+    if (const jint result = env->GetJavaVM(&jvm); result != JNI_OK) {
+        // handle error (should not normally happen)
         return nullptr;
     }
-    return get_jni_env_from_jvm(global_JVM);
-}
 
-void logger_callback(const rtcLogLevel level, const char* message) {
-    if (message == nullptr) {
-        return;
-    }
-    JNIEnv* env = get_jni_env();
-    if (env != nullptr) {
-        call_tel_schich_libdatachannel_LibDataChannel_log_cstr(env, level, message);
-    }
+    return jvm;
 }
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved) {
@@ -58,15 +54,23 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved) {
     jvm_unloading.store(false);
     JNIEnv* env = get_jni_env_from_jvm(jvm);
     module_OnLoad(env);
-    rtcInitLogger(RTC_LOG_VERBOSE, &logger_callback);
-    rtcPreload();
+    rtc::InitLogger(rtc::LogLevel::Verbose, [&jvm](rtc::LogLevel level, const std::string& message) {
+        JNIEnv* env = get_jni_env_from_jvm(jvm);
+        if (env != nullptr) {
+            call_tel_schich_libdatachannel_LibDataChannel_log_cstr(env, static_cast<jint>(level), message.c_str());
+        }
+    });
+    rtc::Preload();
     return JNI_VERSION;
 }
 
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* jvm, void* reserved) {
     jvm_unloading.store(true);
-    rtcCleanup();
-    JNIEnv* env = get_jni_env();
-    module_OnUnload(env);
-    global_JVM = nullptr;
+	auto env = get_jni_env_from_jvm(jvm);
+    if (env != nullptr) {
+	    if (rtc::Cleanup().wait_for(10s) == std::future_status::timeout) {
+            call_tel_schich_libdatachannel_LibDataChannel_log_cstr(env, static_cast<jint>(rtc::LogLevel::Error), "Cleanup timed out!");
+	    }
+        module_OnUnload(env);
+    }
 }

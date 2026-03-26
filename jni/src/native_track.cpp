@@ -1,4 +1,6 @@
+#include "rtc/track.hpp"
 #include "util.hpp"
+
 #include <jni-java-to-c.h>
 #include <jni.h>
 #include <rtc/rtc.h>
@@ -35,20 +37,25 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcAd
     return rtcAddTrackEx(peerHandle, &init);
 }
 
-JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetTrackDescription(JNIEnv* env, jclass clazz, const jint trackHandle) {
-    return GET_DYNAMIC_STRING(env, rtcGetTrackDescription, trackHandle);
+JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetTrackDescription(JNIEnv* env, jclass clazz, const jlong trackHandle) {
+    auto track = util::dehandlize<rtc::Track>(env, trackHandle);
+    return util::get_string_for_java(env, [&track] {
+        return track->description();
+    });
 }
 
-JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetTrackDirection(JNIEnv* env, jclass clazz, const jint trackHandle) {
-    rtcDirection direction;
-    WRAP_ERROR(env, rtcGetTrackDirection(trackHandle, &direction));
-    return direction;
+JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetTrackDirection(JNIEnv* env, jclass clazz, const jlong trackHandle) {
+    auto track = util::dehandlize<rtc::Track>(env, trackHandle);
+    return static_cast<jint>(track->direction());
 }
 
-JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetTrackMid(JNIEnv* env, jclass clazz, const jint trackHandle) {
-    return GET_DYNAMIC_STRING(env, rtcGetTrackMid, trackHandle);
+JNIEXPORT jstring JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetTrackMid(JNIEnv* env, jclass clazz, const jlong trackHandle) {
+    auto track = util::dehandlize<rtc::Track>(env, trackHandle);
+    return util::get_string_for_java(env, [&track] {
+        return track->mid();
+    });
 }
 
-JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcDeleteTrack(JNIEnv* env, jclass clazz, const jint trackHandle) {
-    return rtcDeleteTrack(trackHandle);
+JNIEXPORT void JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcDeleteTrack(JNIEnv* env, jclass clazz, const jlong trackHandle) {
+    util::delete_handle<rtc::Track>(env, trackHandle);
 }

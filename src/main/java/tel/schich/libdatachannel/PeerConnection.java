@@ -47,10 +47,10 @@ import java.util.concurrent.Executor;
 public class PeerConnection implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(PeerConnection.class);
 
-    final long peerHandle;
+    private final long peerHandle;
     private final Executor executor;
-    private final ConcurrentMap<Integer, DataChannel> channels;
-    private final ConcurrentMap<Integer, Track> tracks;
+    private final ConcurrentMap<Long, DataChannel> channels;
+    private final ConcurrentMap<Long, Track> tracks;
     final PeerConnectionListener listener;
 
     public final EventListenerContainer<PeerConnectionCallback.LocalDescription> onLocalDescription;
@@ -69,14 +69,14 @@ public class PeerConnection implements Closeable {
         this.tracks = new ConcurrentHashMap<>();
         this.listener = new PeerConnectionListener(this);
 
-        this.onLocalDescription = new EventListenerContainer<>("LocalDescription", set -> rtcSetLocalDescriptionCallback(peerHandle, set), executor);
-        this.onLocalCandidate = new EventListenerContainer<>("LocalCandidate", set -> rtcSetLocalCandidateCallback(peerHandle, set), executor);
-        this.onStateChange = new EventListenerContainer<>("StateChange", set -> rtcSetStateChangeCallback(peerHandle, set), executor);
-        this.onIceStateChange = new EventListenerContainer<>("IceStateChange", set -> rtcSetIceStateChangeCallback(peerHandle, set), executor);
-        this.onGatheringStateChange = new EventListenerContainer<>("GatheringStateChange", set -> rtcSetGatheringStateChangeCallback(peerHandle, set), executor);
-        this.onSignalingStateChange = new EventListenerContainer<>("SignalingStateChange", set -> rtcSetSignalingStateChangeCallback(peerHandle, set), executor);
-        this.onDataChannel = new EventListenerContainer<>("DataChannel", set -> rtcSetDataChannelCallback(peerHandle, set), executor);
-        this.onTrack = new EventListenerContainer<>("Track", set -> rtcSetTrackCallback(peerHandle, set), executor);
+        this.onLocalDescription = new EventListenerContainer<>("LocalDescription", set -> rtcSetLocalDescriptionCallback(peerHandle, listener, set), executor);
+        this.onLocalCandidate = new EventListenerContainer<>("LocalCandidate", set -> rtcSetLocalCandidateCallback(peerHandle, listener, set), executor);
+        this.onStateChange = new EventListenerContainer<>("StateChange", set -> rtcSetStateChangeCallback(peerHandle, listener, set), executor);
+        this.onIceStateChange = new EventListenerContainer<>("IceStateChange", set -> rtcSetIceStateChangeCallback(peerHandle, listener, set), executor);
+        this.onGatheringStateChange = new EventListenerContainer<>("GatheringStateChange", set -> rtcSetGatheringStateChangeCallback(peerHandle, listener, set), executor);
+        this.onSignalingStateChange = new EventListenerContainer<>("SignalingStateChange", set -> rtcSetSignalingStateChangeCallback(peerHandle, listener, set), executor);
+        this.onDataChannel = new EventListenerContainer<>("DataChannel", set -> rtcSetDataChannelCallback(peerHandle, listener, set), executor);
+        this.onTrack = new EventListenerContainer<>("Track", set -> rtcSetTrackCallback(peerHandle, listener, set), executor);
 
         LibDataChannel.CLEANER.register(this, () -> {
             // make sure not to capture this here, that would be a memory leak
@@ -114,7 +114,7 @@ public class PeerConnection implements Closeable {
         if (config.bindAddress != null) {
             bindAddress = config.bindAddress.toString();
         }
-        long result = rtcCreatePeerConnection(
+        long peerHandle = rtcCreatePeerConnection(
                 iceUrisToStrings(config.iceServers),
                 proxyServer,
                 bindAddress,
@@ -129,8 +129,8 @@ public class PeerConnection implements Closeable {
                 config.mtu,
                 config.maxMessageSize);
 
-        final PeerConnection peer = new PeerConnection(result, executor);
-        setupPeerConnectionListener(peer.peerHandle, peer.listener);
+        final PeerConnection peer = new PeerConnection(peerHandle, executor);
+        setupPeerConnectionListener(peerHandle, peer.listener);
 
         return peer;
     }
@@ -144,19 +144,19 @@ public class PeerConnection implements Closeable {
         return channels.get(channelHandle);
     }
 
-    DataChannel newChannel(int channelHandle) {
+    DataChannel newChannel(long channelHandle) {
         return channels.computeIfAbsent(channelHandle, h -> new DataChannel(this, h, executor));
     }
 
-    void dropChannelState(int channelHandle) {
+    void dropChannelState(long channelHandle) {
         channels.remove(channelHandle);
     }
 
-    Track newTrack(int trackHandle) {
+    Track newTrack(long trackHandle) {
         return tracks.computeIfAbsent(trackHandle, h -> new Track(this, h));
     }
 
-    public void dropTrackState(int trackHandle) {
+    public void dropTrackState(long trackHandle) {
         tracks.remove(trackHandle);
     }
 
@@ -372,7 +372,7 @@ public class PeerConnection implements Closeable {
         final DataChannelReliability reliability = init.reliability();
         int stream = init.stream().orElse(0);
         boolean manualStream = init.stream().isPresent();
-        final int channelHandle = wrapError("rtcCreateDataChannelEx", rtcCreateDataChannelEx(peerHandle, label, reliability.isUnordered(), reliability.isUnreliable(), reliability.maxPacketLifeTime().toMillis(), reliability.maxRetransmits(), init.protocol().orElse(null), init.isNegotiated(), stream, manualStream));
+        final long channelHandle = rtcCreateDataChannelEx(peerHandle, label, reliability.isUnordered(), reliability.isUnreliable(), reliability.maxPacketLifeTime().toMillis(), reliability.maxRetransmits(), init.protocol().orElse(null), init.isNegotiated(), stream, manualStream);
         final DataChannel channel = new DataChannel(this, channelHandle, executor);
         this.channels.put(channelHandle, channel);
         return channel;

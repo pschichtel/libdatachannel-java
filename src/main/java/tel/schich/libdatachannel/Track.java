@@ -15,9 +15,9 @@ import java.util.Objects;
 
 public class Track implements Closeable {
     private final PeerConnection peer;
-    private final int trackHandle;
+    private final long trackHandle;
 
-    public Track(final PeerConnection peer, final int trackHandle) {
+    public Track(final PeerConnection peer, final long trackHandle) {
         this.peer = peer;
         this.trackHandle = trackHandle;
     }
@@ -50,7 +50,8 @@ public class Track implements Closeable {
     @Override
     public void close() {
         peer.dropTrackState(trackHandle);
-        wrapError("rtcDeleteTrack", rtcDeleteTrack(trackHandle));
+        // TODO cleaner only?
+        rtcDeleteTrack(trackHandle);
     }
 
     @Override

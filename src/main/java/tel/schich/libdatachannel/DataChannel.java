@@ -37,7 +37,7 @@ import java.util.concurrent.Executor;
  */
 public class DataChannel implements Closeable {
     private final PeerConnection peer;
-    final int channelHandle;
+    final long channelHandle;
 
     public final EventListenerContainer<DataChannelCallback.Open> onOpen;
     public final EventListenerContainer<DataChannelCallback.Closed> onClosed;
@@ -46,7 +46,7 @@ public class DataChannel implements Closeable {
     public final EventListenerContainer<DataChannelCallback.BufferedAmountLow> onBufferedAmountLow;
     public final EventListenerContainer<DataChannelCallback.Available> onAvailable;
 
-    DataChannel(final PeerConnection peer, final int channelHandle, final Executor executor) {
+    DataChannel(final PeerConnection peer, final long channelHandle, final Executor executor) {
         this.peer = peer;
         this.channelHandle = channelHandle;
 
@@ -105,6 +105,7 @@ public class DataChannel implements Closeable {
     @Override
     public void close() {
         if (rtcClose(channelHandle) != ERR_INVALID) {
+            // TODO cleaner only?
             rtcDeleteDataChannel(channelHandle);
         }
 
