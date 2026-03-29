@@ -1,6 +1,6 @@
-#include "global_jvm.hpp"
 #include "jni-c-to-java.h"
 #include "rtc/global.hpp"
+#include "util.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -9,26 +9,22 @@
 
 using namespace std::chrono_literals;
 
-#define JNI_VERSION JNI_VERSION_1_6
-
-static JavaVM* global_JVM;
 static pthread_key_t thread_key;
 static std::atomic jvm_unloading(false);
 
 void detach_thread(void*) {
-    const auto jvm = static_cast<JavaVM*>(pthread_getspecific(thread_key));
-    if (jvm != nullptr) {
+    if (const auto jvm = static_cast<JavaVM*>(pthread_getspecific(thread_key)); jvm != nullptr) {
         jvm->DetachCurrentThread();
     }
 }
 
-JNIEnv* get_jni_env_from_jvm(JavaVM* jvm) {
+JNIEnv* util::get_jni_env_from_jvm(JavaVM* const vm) {
     JNIEnv* env;
-    jint result = jvm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION);
+    jint result = vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION);
     if (result == JNI_EDETACHED) {
-        result = jvm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr);
+        result = vm->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&env), nullptr);
         if (result == JNI_OK) {
-            pthread_setspecific(thread_key, jvm);
+            pthread_setspecific(thread_key, vm);
         }
     }
     if (result != JNI_OK) {
@@ -37,7 +33,7 @@ JNIEnv* get_jni_env_from_jvm(JavaVM* jvm) {
     return env;
 }
 
-JavaVM* get_jvm_from_env(JNIEnv* env) {
+JavaVM* util::get_jvm_from_env(JNIEnv* const env) {
     JavaVM* jvm = nullptr;
 
     if (const jint result = env->GetJavaVM(&jvm); result != JNI_OK) {
@@ -48,26 +44,23 @@ JavaVM* get_jvm_from_env(JNIEnv* env) {
     return jvm;
 }
 
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved) {
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* const vm, void* const reserved) {
     pthread_key_create(&thread_key, detach_thread);
-    global_JVM = jvm;
     jvm_unloading.store(false);
-    JNIEnv* env = get_jni_env_from_jvm(jvm);
+    JNIEnv* env = util::get_jni_env_from_jvm(vm);
     module_OnLoad(env);
-    rtc::InitLogger(rtc::LogLevel::Verbose, [&jvm](rtc::LogLevel level, const std::string& message) {
-        JNIEnv* env = get_jni_env_from_jvm(jvm);
-        if (env != nullptr) {
-            call_tel_schich_libdatachannel_LibDataChannel_log_cstr(env, static_cast<jint>(level), message.c_str());
+    rtc::InitLogger(rtc::LogLevel::Verbose, [vm](rtc::LogLevel level, const std::string& message) {
+        if (JNIEnv* local_env = util::get_jni_env_from_jvm(vm); local_env != nullptr) {
+            call_tel_schich_libdatachannel_LibDataChannel_log_cstr(local_env, static_cast<jint>(level), message.c_str());
         }
     });
     rtc::Preload();
-    return JNI_VERSION;
+    return util::JNI_VERSION;
 }
 
-JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* jvm, void* reserved) {
+JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* const vm, void* const reserved) {
     jvm_unloading.store(true);
-	auto env = get_jni_env_from_jvm(jvm);
-    if (env != nullptr) {
+    if (const auto env = util::get_jni_env_from_jvm(vm); env != nullptr) {
 	    if (rtc::Cleanup().wait_for(10s) == std::future_status::timeout) {
             call_tel_schich_libdatachannel_LibDataChannel_log_cstr(env, static_cast<jint>(rtc::LogLevel::Error), "Cleanup timed out!");
 	    }

@@ -2,44 +2,30 @@ package tel.schich.libdatachannel;
 
 import org.eclipse.jdt.annotation.Nullable;
 
-import static tel.schich.libdatachannel.LibDataChannelNative.rtcDeleteTrack;
-import static tel.schich.libdatachannel.LibDataChannelNative.rtcGetTrackDescription;
-import static tel.schich.libdatachannel.LibDataChannelNative.rtcGetTrackDirection;
-import static tel.schich.libdatachannel.LibDataChannelNative.rtcGetTrackMid;
 import static tel.schich.libdatachannel.Util.mappedEnum;
-import static tel.schich.libdatachannel.Util.wrapError;
 
-import java.io.Closeable;
 import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.Executor;
 
-public class Track implements Closeable {
-    private final PeerConnection peer;
-    private final long trackHandle;
-
-    public Track(final PeerConnection peer, final long trackHandle) {
-        this.peer = peer;
-        this.trackHandle = trackHandle;
-    }
-
-    public PeerConnection peer() {
-        return peer;
+public class Track extends Channel {
+    public Track(final PeerConnection peer, final long trackHandle, final Executor executor) {
+        super(peer, trackHandle, executor, Track::delete);
     }
 
     // After this function has been called, tr must not be used in a function call anymore. This function will block until all scheduled callbacks
     // of tr return (except the one this function might be called in) and no other callback will be called for tr after it returns.
     public String description() {
-        return rtcGetTrackDescription(trackHandle);
+        return getTrackDescription(handle);
     }
 
-    // Retrieves the mid (media indentifier) of a Track.
+    // Retrieves the mid (media identifier) of a Track.
     public String mediaId() {
-        return rtcGetTrackMid(trackHandle);
+        return getTrackMid(handle);
     }
 
     // Retrieves the direction of a Track.
     public Direction direction() {
-        final int directionInt = rtcGetTrackDirection(trackHandle);
+        final int directionInt = getTrackDirection(handle);
         final Direction direction = Direction.of(directionInt);
         if (direction == null) {
             throw new IllegalStateException("Unknown track direction: " + directionInt);
@@ -48,23 +34,11 @@ public class Track implements Closeable {
     }
 
     @Override
-    public void close() {
-        peer.dropTrackState(trackHandle);
-        // TODO cleaner only?
-        rtcDeleteTrack(trackHandle);
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Track)) return false;
         Track track = (Track) o;
-        return trackHandle == track.trackHandle;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(trackHandle);
+        return handle == track.handle;
     }
 
     public enum Direction {
@@ -116,4 +90,28 @@ public class Track implements Closeable {
             return MAP.get(codec);
         }
     }
+
+    @Override
+    protected native void close(long handle);
+
+    @Override
+    protected native boolean isClosed(long handle);
+
+    @Override
+    protected native boolean isOpen(long handle);
+
+    @Override
+    protected native long maxMessageSize(long handle);
+
+    @Override
+    protected native long bufferedAmount(long handle);
+
+    @Override
+    protected native long availableAmount(long handle);
+
+    private static native String getTrackDescription(long trackHandle);
+    private static native int getTrackDirection(long trackHandle);
+    private static native String getTrackMid(long trackHandle);
+
+    private static native void delete(long handle);
 }
