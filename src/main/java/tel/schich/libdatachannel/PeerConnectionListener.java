@@ -74,17 +74,17 @@ class PeerConnectionListener {
 
     @JNIAccess
     void onDataChannel(long channelHandle) {
-        final DataChannel channel = peer.newChannel(channelHandle);
+        final DataChannel channel = peer.registerDataChannel(channelHandle);
         peer.onDataChannel.invoke(h -> h.handleChannel(peer, channel));
     }
 
     @JNIAccess
     void onTrack(long trackHandle) {
-        final Track state = peer.newTrack(trackHandle);
+        final Track state = peer.registerTrack(trackHandle);
         peer.onTrack.invoke(h -> h.handleTrack(peer, state));
     }
 
-    private <T> void invokeWithChannel(int handle, Function<DataChannel, EventListenerContainer<T>> listeners, BiConsumer<T, DataChannel> consumer) {
+    private <T> void invokeWithChannel(long handle, Function<DataChannel, EventListenerContainer<T>> listeners, BiConsumer<T, DataChannel> consumer) {
         final DataChannel channel = peer.channel(handle);
         if (channel == null) {
             LOGGER.warn("Received event for unknown data channel {}!", handle);
@@ -94,37 +94,37 @@ class PeerConnectionListener {
     }
 
     @JNIAccess
-    void onChannelOpen(int channelHandle) {
+    void onChannelOpen(long channelHandle) {
         invokeWithChannel(channelHandle, s -> s.onOpen, DataChannelCallback.Open::onOpen);
     }
 
     @JNIAccess
-    void onChannelClosed(int channelHandle) {
+    void onChannelClosed(long channelHandle) {
         invokeWithChannel(channelHandle, s -> s.onClosed, DataChannelCallback.Closed::onClosed);
     }
 
     @JNIAccess
-    void onChannelError(int channelHandle, String error) {
+    void onChannelError(long channelHandle, String error) {
         invokeWithChannel(channelHandle, s -> s.onError, (h, ch) -> h.onError(ch, error));
     }
 
     @JNIAccess
-    void onChannelTextMessage(int channelHandle, String message) {
+    void onChannelTextMessage(long channelHandle, String message) {
         invokeWithChannel(channelHandle, s -> s.onMessage, (h, ch) -> h.onText(ch, message));
     }
 
     @JNIAccess
-    void onChannelBinaryMessage(int channelHandle, ByteBuffer message) {
+    void onChannelBinaryMessage(long channelHandle, ByteBuffer message) {
         invokeWithChannel(channelHandle, s -> s.onMessage, (h, ch) -> h.onBinary(ch, message));
     }
 
     @JNIAccess
-    void onChannelBufferedAmountLow(int channelHandle) {
+    void onChannelBufferedAmountLow(long channelHandle) {
         invokeWithChannel(channelHandle, s -> s.onBufferedAmountLow, DataChannelCallback.BufferedAmountLow::onBufferedAmountLow);
     }
 
     @JNIAccess
-    void onChannelAvailable(int channelHandle) {
+    void onChannelAvailable(long channelHandle) {
         invokeWithChannel(channelHandle, s -> s.onAvailable, DataChannelCallback.Available::onAvailable);
     }
 }

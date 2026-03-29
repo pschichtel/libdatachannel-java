@@ -53,11 +53,4 @@ public abstract class LibDataChannel {
                 LOGGER.trace(message);
         }
     }
-
-    @JNIAccess
-    private static void freeOnGarbageCollection(Object owner, long nativeAddress) {
-        CLEANER.register(owner, () -> freeMemory(nativeAddress));
-    }
-
-    private static native void freeMemory(long pointer);
 }

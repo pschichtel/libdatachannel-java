@@ -1,7 +1,5 @@
 #pragma once
 
-#include "global_jvm.hpp"
-
 #include <functional>
 #include <jni-c-to-java.h>
 #include <memory>
@@ -9,18 +7,15 @@
 #include <stdexcept>
 #include <string>
 
-#define EXCEPTION_THROWN (-999)
-
-jint wrap_error(JNIEnv* env, const char* message, int result);
-
-void throw_native_exception(JNIEnv* env, const char* msg);
-
-#define THROW_FAILED_GET_STR(env, expr) throw_native_exception(env, "failed to get string for " #expr)
-
 namespace util {
+    constexpr jint JNI_VERSION = JNI_VERSION_1_6;
+    constexpr int EXCEPTION_THROWN = -999;
     std::string getJavaString(JNIEnv* env, jstring s);
 
-    template <typename F> auto wrapResult(JNIEnv* env, F func) -> decltype(func()) {
+    JavaVM* get_jvm_from_env(JNIEnv* env);
+    JNIEnv* get_jni_env_from_jvm(JavaVM* vm);
+
+    template <typename F> auto wrapResult(JNIEnv* const env, const F func) -> decltype(func()) {
         try {
             return func();
         } catch (const std::invalid_argument &e) {
@@ -32,7 +27,7 @@ namespace util {
         }
     }
 
-    template <typename F> void wrap(JNIEnv* env, F func) {
+    template <typename F> void wrap(JNIEnv* const env, const F func) {
         try {
             func();
         } catch (const std::invalid_argument &e) {
@@ -43,7 +38,7 @@ namespace util {
     }
 
     template<typename Object>
-    jlong handlize(JNIEnv* env, std::shared_ptr<Object> obj) {
+    jlong handlize(JNIEnv* const env, const std::shared_ptr<Object> obj) {
         if (obj == nullptr) {
             throw_tel_schich_libdatachannel_exception_InvalidException_cstr(env, "Can't handlize null pointer!");
             return 0;
@@ -53,7 +48,7 @@ namespace util {
     }
 
     template<typename Object>
-    std::shared_ptr<Object> dehandlize(JNIEnv* env, jlong handle) {
+    std::shared_ptr<Object> dehandlize(JNIEnv* const env, const jlong handle) {
         if (handle == 0) {
             throw_tel_schich_libdatachannel_exception_InvalidException_cstr(env, "Can't dehandlize null pointer!");
             return nullptr;
@@ -62,7 +57,7 @@ namespace util {
     }
 
     template<typename Object>
-    void delete_handle(JNIEnv* env, jlong handle) {
+    void delete_handle(JNIEnv* const env, const jlong handle) {
         if (handle == 0) {
             throw_tel_schich_libdatachannel_exception_InvalidException_cstr(env, "Can't delete null pointer!");
             return;
@@ -73,11 +68,11 @@ namespace util {
     jstring get_string_for_java(JNIEnv* env, const std::function<std::optional<std::string>()>& func);
 
     template <typename Object, typename CallbackSignature, typename Bridge>
-    void setup_rtc_callback(
+    void setup_callback(
         JNIEnv* env,
-        jlong handle,
-        jobject listener,
-        jboolean set,
+        const jlong handle,
+        const jobject target,
+        const jboolean set,
         std::function<void(Object*, std::function<CallbackSignature>)> setter,
         Bridge bridge
     ) {
@@ -85,24 +80,22 @@ namespace util {
 
         if (set) {
             auto vm = get_jvm_from_env(env);
-            if (vm == nullptr) {
+            if (vm == nullptr) [[unlikely]] {
                 throw_tel_schich_libdatachannel_exception_FailureException_cstr(env, "Failed to get JavaVM reference!");
                 return;
             }
 
-            std::shared_ptr<_jobject> listener_ref(
-                env->NewGlobalRef(listener),
-                [vm](jobject obj) {
-                    const auto local_env = get_jni_env_from_jvm(vm);
-                    if (local_env != nullptr) {
+            std::shared_ptr<_jobject> target_ref(
+                env->NewGlobalRef(target),
+                [vm](const jobject obj) {
+                    if (const auto local_env = get_jni_env_from_jvm(vm); local_env != nullptr) {
                         local_env->DeleteGlobalRef(obj);
                     }
                 }
             );
-            setter(object_ref.get(), [vm, listener_ref, bridge](auto... args) {
-                const auto local_env = get_jni_env_from_jvm(vm);
-                if (local_env != nullptr) {
-                    bridge(local_env, listener_ref.get(), args...);
+            setter(object_ref.get(), [vm, target_ref, bridge](auto... args) {
+                if (const auto local_env = get_jni_env_from_jvm(vm); local_env != nullptr) {
+                    bridge(local_env, target_ref.get(), args...);
                 }
             });
         } else {

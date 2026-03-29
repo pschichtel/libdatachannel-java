@@ -30,9 +30,7 @@ import static tel.schich.libdatachannel.LibDataChannelNative.rtcSetRemoteDescrip
 import static tel.schich.libdatachannel.LibDataChannelNative.rtcSetSignalingStateChangeCallback;
 import static tel.schich.libdatachannel.LibDataChannelNative.rtcSetStateChangeCallback;
 import static tel.schich.libdatachannel.LibDataChannelNative.rtcSetTrackCallback;
-import static tel.schich.libdatachannel.LibDataChannelNative.setupPeerConnectionListener;
 import static tel.schich.libdatachannel.Util.parseAddress;
-import static tel.schich.libdatachannel.Util.wrapError;
 
 import java.io.Closeable;
 import java.net.InetSocketAddress;
@@ -49,8 +47,7 @@ public class PeerConnection implements Closeable {
 
     private final long peerHandle;
     private final Executor executor;
-    private final ConcurrentMap<Long, DataChannel> channels;
-    private final ConcurrentMap<Long, Track> tracks;
+    private final ConcurrentMap<Long, Channel> channels;
     final PeerConnectionListener listener;
 
     public final EventListenerContainer<PeerConnectionCallback.LocalDescription> onLocalDescription;
@@ -66,7 +63,6 @@ public class PeerConnection implements Closeable {
         this.peerHandle = peerHandle;
         this.executor = executor;
         this.channels = new ConcurrentHashMap<>();
-        this.tracks = new ConcurrentHashMap<>();
         this.listener = new PeerConnectionListener(this);
 
         this.onLocalDescription = new EventListenerContainer<>("LocalDescription", set -> rtcSetLocalDescriptionCallback(peerHandle, listener, set), executor);
@@ -79,7 +75,7 @@ public class PeerConnection implements Closeable {
         this.onTrack = new EventListenerContainer<>("Track", set -> rtcSetTrackCallback(peerHandle, listener, set), executor);
 
         LibDataChannel.CLEANER.register(this, () -> {
-            // make sure not to capture this here, that would be a memory leak
+            // make sure not to capture `this` here, that would be a memory leak
             rtcDeletePeerConnection(peerHandle);
         });
     }
@@ -129,10 +125,7 @@ public class PeerConnection implements Closeable {
                 config.mtu,
                 config.maxMessageSize);
 
-        final PeerConnection peer = new PeerConnection(peerHandle, executor);
-        setupPeerConnectionListener(peerHandle, peer.listener);
-
-        return peer;
+        return new PeerConnection(peerHandle, executor);
     }
 
     public static PeerConnection createPeer(PeerConnectionConfiguration config) {
@@ -140,24 +133,20 @@ public class PeerConnection implements Closeable {
     }
 
     @Nullable
-    DataChannel channel(int channelHandle) {
-        return channels.get(channelHandle);
+    DataChannel channel(long channelHandle) {
+        return (DataChannel) channels.get(channelHandle);
     }
 
-    DataChannel newChannel(long channelHandle) {
-        return channels.computeIfAbsent(channelHandle, h -> new DataChannel(this, h, executor));
+    DataChannel registerDataChannel(long channelHandle) {
+        return (DataChannel) channels.computeIfAbsent(channelHandle, h -> new DataChannel(this, h, executor));
     }
 
     void dropChannelState(long channelHandle) {
         channels.remove(channelHandle);
     }
 
-    Track newTrack(long trackHandle) {
-        return tracks.computeIfAbsent(trackHandle, h -> new Track(this, h));
-    }
-
-    public void dropTrackState(long trackHandle) {
-        tracks.remove(trackHandle);
+    Track registerTrack(long trackHandle) {
+        return (Track) channels.computeIfAbsent(trackHandle, h -> new Track(this, h, executor));
     }
 
     /**
@@ -187,7 +176,7 @@ public class PeerConnection implements Closeable {
      * Closes all Data Channels.
      */
     public void closeChannels() {
-        for (final DataChannel ch : new ArrayList<>(this.channels.values())) {
+        for (final Channel ch : new ArrayList<>(this.channels.values())) {
             ch.close();
         }
         if (!this.channels.isEmpty()) {
@@ -337,7 +326,7 @@ public class PeerConnection implements Closeable {
      *
      * @return the maximum message size
      */
-    public int remoteMaxMessageSize() {
+    public long remoteMaxMessageSize() {
         return rtcGetRemoteMaxMessageSize(peerHandle);
     }
 
@@ -381,13 +370,17 @@ public class PeerConnection implements Closeable {
     // Adds a new Track on a Peer Connection. The Peer Connection does not need to be connected, however, the Track will be open only when the Peer Connection is connected.
     // sdp: a null-terminated string specifying the corresponding media SDP. It must start with a m-line and include a mid parameter.
     public Track addTrack(String sdp) {
-        final int trackHandle = wrapError("rtcAddTrack", rtcAddTrack(peerHandle, sdp));
-        return new Track(this, trackHandle);
+        final long trackHandle = rtcAddTrack(peerHandle, sdp);
+        final Track track = new Track(this, trackHandle, executor);
+        this.channels.putIfAbsent(trackHandle, track);
+        return track;
     }
 
     public Track addTrack(TrackInit init) {
-        final int trackHandle = wrapError("rtcAddTrackEx", rtcAddTrackEx(peerHandle, init.direction().direction, init.codec().codec));
-        return new Track(this, trackHandle);
+        final long trackHandle = rtcAddTrackEx(peerHandle, init.direction().direction, init.codec().codec);
+        final Track track = new Track(this, trackHandle, executor);
+        this.channels.putIfAbsent(trackHandle, track);
+        return track;
     }
 
     @Override
