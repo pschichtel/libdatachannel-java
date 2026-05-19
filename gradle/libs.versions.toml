@@ -4,7 +4,7 @@ jniAccessGenerator = "1.2.3"
 jdtAnnotations = "2.4.100"
 slf4j = "2.0.18"
 logback = "1.5.32"
-junitJupiter = "6.0.3"
+junitJupiter = "6.1.0"
 mavenDeployer = "0.5.2"
 
 [libraries]
