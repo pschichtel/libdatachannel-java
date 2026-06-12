@@ -9,7 +9,7 @@ statically_linked_platforms = {
 
 class LibDataChannel(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
-    requires = "openssl/3.6.3"
+    requires = "openssl/4.0.1"
     generators = "CMakeDeps"
 
     def configure(self):
