@@ -12,8 +12,8 @@ static JavaVM* global_JVM;
 static pthread_key_t thread_key;
 static std::atomic<bool> jvm_unloading(false);
 
-void detach_thread(void*) {
-    const auto jvm = static_cast<JavaVM*>(pthread_getspecific(thread_key));
+void detach_thread(void* value) {
+    const auto jvm = static_cast<JavaVM*>(value);
     if (jvm != nullptr) {
         jvm->DetachCurrentThread();
     }
