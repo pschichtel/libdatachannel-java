@@ -145,11 +145,12 @@ JNIEXPORT jint JNICALL
 Java_tel_schich_libdatachannel_LibDataChannelNative_rtcDeletePeerConnection(JNIEnv* env, jclass clazz,
                                                                             const jint peerHandle) {
     const auto* callback = static_cast<jvm_callback*>(rtcGetUserPointer(peerHandle));
-    if (callback != nullptr) {
+    const jint result = rtcDeletePeerConnection(peerHandle);
+    if (result == RTC_ERR_SUCCESS && callback != nullptr) {
         free_callback(env, callback);
     }
 
-    return rtcDeletePeerConnection(peerHandle);
+    return result;
 }
 
 
