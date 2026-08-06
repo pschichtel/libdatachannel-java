@@ -41,6 +41,9 @@ void* attach_and_terminate(void* data) {
 
     result->thread = env->NewGlobalRef(thread);
     if (result->thread == nullptr) {
+        if (env->ExceptionCheck()) {
+            env->ExceptionClear();
+        }
         result->error = "Failed to retain current native thread";
     }
     return nullptr;
