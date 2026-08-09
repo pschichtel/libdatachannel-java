@@ -65,7 +65,7 @@ version = produceVersion()
 val isSnapshot = version.toString().endsWith("-SNAPSHOT")
 description = "${project.name} is a binding to the libdatachannel that feels native to Java developers."
 
-val currentVersion by tasks.registering(DefaultTask::class) {
+val currentVersion = tasks.register<DefaultTask>("currentVersion") {
     doLast {
         println(version)
     }
@@ -182,13 +182,13 @@ fun Jar.baseConfigure(compileTask: TaskProvider<DockcrossRunTask>, buildOutputDi
 
 val dockcrossOutputDir: Directory = project.layout.buildDirectory.get().dir("dockcross")
 val nativeForHostOutputDir: Directory = dockcrossOutputDir.dir("host")
-val compileNativeForHost by tasks.registering(DockcrossRunTask::class) {
+val compileNativeForHost = tasks.register<DockcrossRunTask>("compileNativeForHost") {
     baseConfigure(nativeForHostOutputDir, BuildTarget(image = null, family = "host", classifier = "host"))
     unsafeWritableMountSource = true
     runner(NonContainerRunner)
 }
 
-val packageNativeForHost by tasks.registering(Jar::class) {
+val packageNativeForHost = tasks.register<Jar>("packageNativeForHost") {
     baseConfigure(compileNativeForHost, nativeForHostOutputDir)
     archiveClassifier = "host"
 }
@@ -251,7 +251,7 @@ val targets = listOf(
     macosTarget(classifier = "x86_64", arch = "x86_64"),
 )
 
-val packageNativeAll by tasks.registering(DefaultTask::class) {
+val packageNativeAll = tasks.register<DefaultTask>("packageNativeAll") {
     group = nativeGroup
 }
 
@@ -401,7 +401,7 @@ tasks.deploy {
     }
 }
 
-val mavenCentralDeploy by tasks.registering(DefaultTask::class) {
+val mavenCentralDeploy = tasks.register<DefaultTask>("mavenCentralDeploy") {
     group = "publishing"
 
     val repo = if (isSnapshot) {
@@ -426,7 +426,7 @@ val mavenCentralDeploy by tasks.registering(DefaultTask::class) {
     }
 }
 
-val githubActions by tasks.registering(DefaultTask::class) {
+val githubActions = tasks.register<DefaultTask>("githubActions") {
     group = "publishing"
     val deployRefPattern = """^refs/(?:tags/v\d+\.\d+\.\d+\.\d+|heads/main)$""".toRegex()
     val ref = System.getenv("GITHUB_REF")?.ifBlank { null }?.trim()

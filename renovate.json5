@@ -1,11 +1,18 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   "git-submodules": {
-    "enabled": true,
+    enabled: true,
   },
   conan: {
-    "enabled": true,
+    enabled: true,
   },
+  packageRules: [
+    {
+      matchPackageNames: ["ch.qos.logback:logback-classic"],
+      matchUpdateTypes: ["major", "minor"],
+      enabled: false
+    },
+  ],
   // customManagers: [
   //   {
   //     fileMatch: ["^build\\.gradle\\.kts$"],

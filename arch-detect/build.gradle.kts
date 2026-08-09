@@ -4,7 +4,7 @@ plugins {
 
 version = rootProject.version
 
-val nativeLibs by configurations.registering
+val nativeLibs = configurations.register("nativeLibs")
 
 dependencies {
     api(rootProject)
