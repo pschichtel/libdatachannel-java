@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.slf4j)
 
     testImplementation(libs.junitJupiter)
+    testRuntimeOnly(libs.junitPlatformLauncher)
     testImplementation(libs.logbackClassic)
 }
 
