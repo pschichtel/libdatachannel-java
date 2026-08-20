@@ -9,8 +9,8 @@
 static JavaVM* global_JVM;
 static pthread_key_t thread_key;
 
-void detach_thread() {
-    JavaVM* jvm = pthread_getspecific(thread_key);
+static void detach_thread(void* value) {
+    JavaVM* jvm = value;
     if (jvm != NULL) {
         (*jvm)->DetachCurrentThread(jvm);
     }

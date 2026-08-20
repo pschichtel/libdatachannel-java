@@ -5,6 +5,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 
 option(PROJECT_VERSION "The version of the project" "unspecified")
+option(BUILD_JNI_TESTS "Build JNI test support" OFF)
 
 set(NO_WEBSOCKET ON CACHE BOOL "configure libdatachannel build")
 set(NO_MEDIA ON CACHE BOOL "configure libdatachannel build")
@@ -56,4 +57,10 @@ add_library(datachannel-java SHARED
         src/native_peer.c
         src/native_track.c
         src/callback.c)
+if(BUILD_JNI_TESTS)
+    target_compile_definitions(datachannel-java PRIVATE BUILD_JNI_TESTS)
+    target_sources(datachannel-java PRIVATE
+            test/callback_lifecycle.c
+            test/thread_lifecycle.c)
+endif()
 target_link_libraries(datachannel-java PRIVATE datachannel-static)
