@@ -6,6 +6,10 @@
 #include <rtc/rtc.h>
 #include <stdlib.h>
 
+#ifdef BUILD_JNI_TESTS
+#include "../test/callback_lifecycle.h"
+#endif
+
 void RTC_API handle_local_description(int pc, const char* sdp, const char* type, void* ptr) {
     DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onLocalDescription_cstr, sdp, type);
 }
@@ -32,6 +36,11 @@ void RTC_API handle_gathering_state_change(int pc, rtcGatheringState state, void
 SET_CALLBACK_INTERFACE_IMPL(rtcSetGatheringStateChangeCallback, handle_gathering_state_change)
 
 void RTC_API handle_signaling_state_change(int pc, rtcSignalingState state, void* ptr) {
+#ifdef BUILD_JNI_TESTS
+    if (!wait_for_signaling_state_callback_test()) {
+        return;
+    }
+#endif
     DISPATCH_JNI(call_tel_schich_libdatachannel_PeerConnectionListener_onSignalingStateChange, state);
 }
 SET_CALLBACK_INTERFACE_IMPL(rtcSetSignalingStateChangeCallback, handle_signaling_state_change)
